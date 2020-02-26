@@ -1,6 +1,9 @@
 */cmake-build-debug/
 */.idea
 
+.catkin_workspace
+/build
+
 */build/
 */bin/
 */lib/
@@ -50,6 +53,37 @@
 # Catkin custom files
 CATKIN_IGNORE
 
-.vscode/c_cpp_properties.json
-
+# vs code folder
+.vscode/*
+*/.vscode/*
 .vscode/settings.json
+
+# tex files
+*.aux
+*.glo
+*.idx
+*.log
+*.toc
+*.ist
+*.acn
+*.acr
+*.alg
+*.bbl
+*.blg
+*.dvi
+*.fdb_latexmk
+*.fls
+*.glg
+*.gls
+*.ilg
+*.ind
+*.lof
+*.lot
+*.maf
+*.mtc
+*.mtc1
+*.out
+*.synctex.gz
+
+# Jupyter notebook 
+*/.ipynb_checkpoints/*
