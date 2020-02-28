@@ -1,0 +1,12 @@
+#!/bin/sh
+chmod u+x '../comp0037_time_server/scripts/time_server_node.py'
+chmod u+x '../comp0037_the_boss/scripts/boss_node.py'
+chmod u+x '../comp0037_resources/scripts/robot_listener.py'
+chmod u+x '../comp0037_reactive_planner_controller/scripts/map_tester.py'
+chmod u+x '../comp0037_reactive_planner_controller/scripts/minkowski_sum_tester.py'
+chmod u+x '../comp0037_reactive_planner_controller/scripts/planner_controller_node.py'
+chmod u+x '../comp0037_reactive_planner_controller/scripts/run_fifo_standalone.py'
+chmod u+x '../comp0037_reactive_planner_controller/scripts/run_lifo_standalone.py'
+chmod u+x '../comp0037_mapper/scripts/mapperNode'
+chmod u+x '../comp0037_explorer/scripts/explorerNode'
+chmod u+x '../comp0037_example/scripts/moving_the_robot.py'
