@@ -14,6 +14,7 @@ class ReactivePlannerController(PlannerControllerBase):
 
         self.mapUpdateSubscriber = rospy.Subscriber('updated_map', MapUpdate, self.mapUpdateCallback)
         self.gridUpdateLock =  threading.Condition()
+        self.threshold = 0.8
 
     def mapUpdateCallback(self, mapUpdateMessage):
 
@@ -30,22 +31,25 @@ class ReactivePlannerController(PlannerControllerBase):
         self.checkIfPathCurrentPathIsStillGood()
 
     def checkIfPathCurrentPathIsStillGood(self):
-            print(type(self.currentPlannedPath.waypoints[0]))
-        # for waypointNumber in range(0,len(self.currentPlannedPath.waypoints)):
-        #     print(type(self.currentPlannedPath.waypoints[]))
+        for waypointNumber in range(0,len(self.currentPlannedPath.waypoints)):
+            coords = self.currentPlannedPath.waypoints[waypointNumber].coords
+
+            if self.occupancyGrid.getCell(coords[0],coords[1]) > self.threshold:
+                self.controller.stopDrivingToCurrentGoal()
+                break
+            
         # This methods needs to check if the current path, whose
         # waypoints are in self.currentPlannedPath, can still be
         # traversed
                 
         # If the route is not viable any more, call
         # self.controller.stopDrivingToCurrentGoal()
-
         pass
-    
+
     def driveToGoal(self, goal):
 
         # Get the goal coordinate in cells
-         
+        goalCellCoords = self.occupancyGrid.getCellCoordinatesFromWorldCoordinates((goal.x,goal.y))
 
         # Reactive planner main loop - keep iterating until the goal is reached or the robot gets
         # stuck.
