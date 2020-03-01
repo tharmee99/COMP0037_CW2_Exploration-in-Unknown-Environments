@@ -30,7 +30,9 @@ class ReactivePlannerController(PlannerControllerBase):
         self.checkIfPathCurrentPathIsStillGood()
 
     def checkIfPathCurrentPathIsStillGood(self):
-
+            print(type(self.currentPlannedPath.waypoints[0]))
+        # for waypointNumber in range(0,len(self.currentPlannedPath.waypoints)):
+        #     print(type(self.currentPlannedPath.waypoints[]))
         # This methods needs to check if the current path, whose
         # waypoints are in self.currentPlannedPath, can still be
         # traversed
@@ -43,7 +45,7 @@ class ReactivePlannerController(PlannerControllerBase):
     def driveToGoal(self, goal):
 
         # Get the goal coordinate in cells
-        goalCellCoords = self.occupancyGrid.getCellCoordinatesFromWorldCoordinates((goal.x,goal.y))
+         
 
         # Reactive planner main loop - keep iterating until the goal is reached or the robot gets
         # stuck.
