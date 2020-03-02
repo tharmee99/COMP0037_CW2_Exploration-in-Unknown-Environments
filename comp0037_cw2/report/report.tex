@@ -9,6 +9,9 @@
 \usepackage{setspace}
 \usepackage{appendix}
 
+\usepackage{caption}
+\usepackage{subcaption}
+
 %***************************************DOCUMENT***************************************
 
 \begin{document}
@@ -62,24 +65,34 @@
 	%%%%%%%%%%% PART 1 %%%%%%%%%%%%%%%%%
 	\section{Implement Reactive Planner }
 		\begin{figure}[H]
-			\label{ReactivePlannerFlowchart}
+			\label{reactivePlannerFlowchart}
 			\centering
 			
-			\includegraphics[scale=0.13]{images/ReactivePlannerFlowchart.png}
+			\includegraphics[scale=0.13]{images/reactivePlannerFlowchart.png}
 			\caption{Flowchart for the reactive planner}
 		\end{figure}
 	
-		A reactive planner is able to adapt its path based on the information it obtains about the environment as it explores it. The high-level functionality of a general reactive planner is described in the flowchart in Fig.\ref{ReactivePlannerFlowchart}. The reactive planner initially utilizes the available occupancy grid and assumes any unknown cells to be free. The planner then plans a path using this assumption and starts to traverse the path. The robot will explore the environment as it traverses the path and if new information suggests that the currently planned path is no longer traversable, a new path is planned using the new occupancy grid. This process is repeated until the robot arrives at the goal.
+		A reactive planner is able to adapt its path based on the information it obtains about the environment as it explores it. The high-level functionality of a general reactive planner is described in the flowchart in Fig.\ref{reactivePlannerFlowchart}. The reactive planner initially utilizes the available occupancy grid and assumes any unknown cells to be free. The planner then plans a path using this assumption and starts to traverse the path. The robot will explore the environment as it traverses the path and if new information suggests that the currently planned path is no longer traversable, a new path is planned using the new occupancy grid. This process is repeated until the robot arrives at the goal.
 		\\
-		As a means of testing the code the robot was set to visit a list of goals on the factory map. The final mapper node occupancy grid is shown in Fig.\ref{mapperNodeOccupancyGrid}. It is clear to see that there are inaccuracies in the mapping of the world as well as some areas which have still not been explored completely. The inaccuracies occur as a result of rounding errors and other noise due to timing mismatch (caused by networking delays), these errors are mostly corrected as the robot re-explores an area. 
+		As a means of testing the code the robot was set to visit a list of goals on the factory map. The final mapper node occupancy grid is shown in Fig.\ref{mapperNodeOccupancyGrid}. It is clear to see that there are inaccuracies in the mapping of the world as well as some areas which have still not been explored completely. The inaccuracies occur as a result of rounding errors and other noise due to timing mismatch (caused by networking delays), these errors are mostly corrected as the robot re-explores an area. The way the map is updated is using the laser range finder that the robot is equipped with. This Depending on the reflections of this laser, the environment surrounding the robot can be mapped. 
 
 		\begin{figure}[H]
-			\label{mapperNodeOccupancyGrid}
 			\centering
-			
-			\includegraphics[scale=0.3]{images/mapperNodeOccupancyGrid.png}
-			\caption{Flowchart for the reactive planner}
-		\end{figure}
+			\begin{subfigure}{.5\textwidth}
+			  \centering
+			  \includegraphics[width=.7\linewidth]{images/mapperNodeOccupancyGrid.png}
+			  \caption{Mapper Node occupancy grid}
+			  \label{mapperNodeOccupancyGrid}
+			\end{subfigure}%
+			\begin{subfigure}{.5\textwidth}
+			  \centering
+			  \includegraphics[width=.7\linewidth]{images/robotLaserRange.png}
+			  \caption{Robot Laser Range Finder}
+			  \label{robotLaserRange}
+			\end{subfigure}
+			\caption{a) Mapper occupancy grid at the end of traversing the set of goals. b) The robot traversing the map with the laser range finder visualized by the red lines. The maximum range as well as the opaque walls preventing the laser from passing through can also be seen.}
+			\label{fig:test}
+			\end{figure}
 
 	%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 	
