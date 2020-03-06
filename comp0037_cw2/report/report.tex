@@ -63,7 +63,7 @@
 	\pagebreak
 	
 	%%%%%%%%%%% PART 1 %%%%%%%%%%%%%%%%%
-	\section{Reactive Planner }
+	\section{Reactive Planner}
 		\begin{figure}[H]
 			\centering
 			\includegraphics[scale=0.15]{images/reactivePlannerFlowchart.png}
@@ -82,31 +82,26 @@
 			\begin{figure}[H]
 				\centering
 				\begin{subfigure}{.5\textwidth}
-				\centering
-				\includegraphics[width=.7\linewidth]{images/mapperNodeOccupancyGrid.png}
-				\caption{Mapper Node occupancy grid}
-				\label{mapperNodeOccupancyGrid}
+					\centering
+					\includegraphics[width=.7\linewidth]{images/mapperNodeOccupancyGrid.png}
+					\caption{Mapper Node occupancy grid}
+					\label{mapperNodeOccupancyGrid}
 				\end{subfigure}%
 				\begin{subfigure}{.5\textwidth}
-				\centering
-				\includegraphics[width=.7\linewidth]{images/robotLaserRange.png}
-				\caption{Robot Laser Range Finder}
-				\label{robotLaserRange}
+					\centering
+					\includegraphics[width=.7\linewidth]{images/robotLaserRange.png}
+					\caption{Robot Laser Range Finder}
+					\label{robotLaserRange}
 				\end{subfigure}
 				\caption{a) Mapper occupancy grid at the end of traversing the set of goals. b) The robot traversing the map with the laser range finder visualized by the red lines. The maximum range as well as the opaque walls preventing the laser from passing through can also be seen.}
 				\label{ReactivePlannerMaps}
-				\end{figure}
+			\end{figure}
 
 		\subsection{Improving the performance of the Reactive Planner}
-			\begin{itemize}
-				\item Better global planner
-				\item Remedial action to overcome obstacle
-				\item Locally plan around obstacle
-				\item Globally replan the path (using better planning algorithm)
-			\end{itemize}
+
 			Our implementation of a reactive planner is quite inefficient and may be computationally intense. The current global planner that is used to plan the paths uses an implentation of Dijkstra's algorithm to plan the path. One way of improving the performance is by utilizing the A* algorithm. This way fewer cells will be considered when planning the path resulting in a lower computational cost.
 			\\
-			Another method of improving efficiency is to prevent the algorithm from having to replan the whole path. In a dynamic environment, obstacles may move in and out of the robot's path. Therefore, sometimes it may be sufficient to take a remedial action to overcome/avoid the obstacle. This may involve simply waiting for the obstacle to pass or in more complicated cases it may involve the robot moving the obstacle out of the way. How-ever not all obstacles may be overcome in such a way. For example a newly discoverd wall will neither move on its own nor is it possible for the robot to move the wall. In such a case, a local planner may be utilized to overcom
+			Another method of improving efficiency is to prevent the algorithm from having to replan the whole path. In a dynamic environment, obstacles may move in and out of the robot's path. Therefore, sometimes it may be sufficient to take a remedial action to overcome/avoid the obstacle. This may involve simply waiting for the obstacle to pass or in more complicated cases it may involve the robot moving the obstacle out of the way. How-ever not all obstacles may be overcome in such a way. For example a newly discoverd wall will neither move on its own nor is it possible for the robot to move the wall. In such a case, a local planner may be utilized to plan a path around the obstacle. This involves planning a path to another point on the proposed path and thereby avoiding the obstacle. These local planners are very responsive and generally utilize gradient-based techniques which use physics-based approximations. Despite being fast and responsive, they generally get stuck in local minima. 
 			
 	%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 	
