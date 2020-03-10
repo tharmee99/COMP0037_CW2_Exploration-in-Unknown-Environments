@@ -1,6 +1,7 @@
 import rospy
 import threading
 import math
+import time
 
 from comp0037_mapper.msg import *
 from comp0037_mapper.srv import *
@@ -40,6 +41,9 @@ class ExplorerNodeBase(object):
         self.occupancyGridDrawer = None
         self.deltaOccupancyGridDrawer = None
         self.visualisationUpdateRequired = False
+
+        self.timeTakenToExplore = float('inf')
+        self.coverage = 0
 
         # Request an initial map to get the ball rolling
         rospy.loginfo('Waiting for service request_map_update')
@@ -161,7 +165,20 @@ class ExplorerNodeBase(object):
         velocityMessage = Twist()
         velocityPublisher.publish(velocityMessage)
         rospy.sleep(1)
-            
+    
+    def computeCoverage(self):
+
+        totalCells = self.occupancyGrid.getWidthInCells() * self.occupancyGrid.getHeightInCells()
+        coveredCells = 0
+        for x in range(0, self.occupancyGrid.getWidthInCells()):
+            for y in range(0, self.occupancyGrid.getHeightInCells()):
+                if not (self.checkIfCellIsUnknown(x,y,0,0)):
+                    coveredCells = coveredCells + 1
+        
+        coverage = coveredCells/totalCells
+        return coverage
+
+
     class ExplorerThread(threading.Thread):
         def __init__(self, explorer):
             threading.Thread.__init__(self)
@@ -179,6 +196,7 @@ class ExplorerNodeBase(object):
         def run(self):
 
             self.running = True
+            startTime = time.time()
 
             while (rospy.is_shutdown() is False) & (self.completed is False):
 
@@ -198,8 +216,14 @@ class ExplorerNodeBase(object):
                     self.explorer.destinationReached(newDestination, attempt)
                 else:
                     self.completed = True
-                    
-       
+                    endTime = time.time()
+                    self.explorer.timeTakenToExplore = endTime - startTime
+                    self.explorer.coverage = self.explorer.computeCoverage()
+
+                    print("-----------------------------------------------------------------------------------------")
+                    print(self.explorer.timeTakenToExplore)
+                    print(self.explorer.coverage)
+
     def run(self):
 
         explorerThread = ExplorerNodeBase.ExplorerThread(self)
