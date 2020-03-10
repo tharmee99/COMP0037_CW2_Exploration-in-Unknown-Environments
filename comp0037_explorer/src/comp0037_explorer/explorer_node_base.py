@@ -168,8 +168,8 @@ class ExplorerNodeBase(object):
     
     def computeCoverage(self):
 
-        totalCells = self.occupancyGrid.getWidthInCells() * self.occupancyGrid.getHeightInCells()
-        coveredCells = 0
+        totalCells = float(self.occupancyGrid.getWidthInCells() * self.occupancyGrid.getHeightInCells())
+        coveredCells = 0.0
         for x in range(0, self.occupancyGrid.getWidthInCells()):
             for y in range(0, self.occupancyGrid.getHeightInCells()):
                 if not (self.checkIfCellIsUnknown(x,y,0,0)):
@@ -177,7 +177,6 @@ class ExplorerNodeBase(object):
         
         coverage = coveredCells/totalCells
         return coverage
-
 
     class ExplorerThread(threading.Thread):
         def __init__(self, explorer):
@@ -220,9 +219,8 @@ class ExplorerNodeBase(object):
                     self.explorer.timeTakenToExplore = endTime - startTime
                     self.explorer.coverage = self.explorer.computeCoverage()
 
-                    print("-----------------------------------------------------------------------------------------")
-                    print(self.explorer.timeTakenToExplore)
-                    print(self.explorer.coverage)
+                    print("Time taken to explore map: " + self.explorer.timeTakenToExplore + "s")
+                    print("Proportion of map explored: " + self.explorer.coverage)
 
     def run(self):
 
