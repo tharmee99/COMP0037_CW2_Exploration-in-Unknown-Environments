@@ -1,8 +1,7 @@
 import rospy
 
 from explorer_node_base import ExplorerNodeBase
-from collections import deque
-
+from Queue import PriorityQueue
 # This class implements a super dumb explorer. It goes through the
 # current map and marks the first cell it sees as the one to go for
 
@@ -13,16 +12,20 @@ class ExplorerNode(ExplorerNodeBase):
 
         self.blackList = []
 
-        self.mapCellQueue = deque()
+        self.frontierCells = []
+        self.frontierClusters = PriorityQueue()
 
     def updateFrontiers(self):
-        pass
-    
-    def chooseNewDestination(self):
-        self.mapCellQueue = deque()
 
-        currentPose = self.occupancyGrid.getCellCoordinatesFromWorldCoordinates(self.getCurrentPosition())
-        self.mapCellQueue.append(currentPose)
+        print(len(self.deltaOccupancyGrid.grid))
+
+        # for newCell in self.deltaOccupancyGrid.grid:
+        #     if newCell in self.frontierCells:
+        #         # Update Existing Frontiers
+
+        #     if self.isFrontierCell(newCell)
+
+        # pass
 
     def chooseNewDestinationOld(self):
 #         print 'blackList:'
