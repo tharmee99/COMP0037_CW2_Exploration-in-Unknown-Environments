@@ -16,18 +16,15 @@ class ExplorerNode(ExplorerNodeBase):
         self.frontierClusters = PriorityQueue()
 
     def updateFrontiers(self):
+        
+        print("-----------------------")
 
-        print(len(self.deltaOccupancyGrid.grid))
+        for x in range(0, self.deltaOccupancyGrid.getWidthInCells()):
+            for y in range(0, self.deltaOccupancyGrid.getHeightInCells()):
+                if (self.deltaOccupancyGrid.getCell(x,y) == 1.0):
+                
 
-        # for newCell in self.deltaOccupancyGrid.grid:
-        #     if newCell in self.frontierCells:
-        #         # Update Existing Frontiers
-
-        #     if self.isFrontierCell(newCell)
-
-        # pass
-
-    def chooseNewDestinationOld(self):
+    def chooseNewDestination(self):
 #         print 'blackList:'
 #         for coords in self.blackList:
 #             print str(coords)
