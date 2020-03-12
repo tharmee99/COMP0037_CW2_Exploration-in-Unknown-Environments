@@ -1,6 +1,7 @@
 import rospy
 
 from explorer_node_base import ExplorerNodeBase
+from collections import deque
 
 # This class implements a super dumb explorer. It goes through the
 # current map and marks the first cell it sees as the one to go for
@@ -12,12 +13,18 @@ class ExplorerNode(ExplorerNodeBase):
 
         self.blackList = []
 
+        self.mapCellQueue = deque()
+
     def updateFrontiers(self):
         pass
-
+    
     def chooseNewDestination(self):
+        self.mapCellQueue = deque()
 
+        currentPose = self.occupancyGrid.getCellCoordinatesFromWorldCoordinates(self.getCurrentPosition())
+        self.mapCellQueue.append(currentPose)
 
+    def chooseNewDestinationOld(self):
 #         print 'blackList:'
 #         for coords in self.blackList:
 #             print str(coords)
@@ -25,7 +32,7 @@ class ExplorerNode(ExplorerNodeBase):
         candidateGood = False
         destination = None
         smallestD2 = float('inf')
-
+    
         for x in range(0, self.occupancyGrid.getWidthInCells()):
             for y in range(0, self.occupancyGrid.getHeightInCells()):
                 candidate = (x, y)
@@ -37,6 +44,7 @@ class ExplorerNode(ExplorerNodeBase):
                             break
                     
                     if candidateGood is True:
+                        # Compute the shortest distance to middle of the map in the y axis.
                         d2 = candidate[0]**2+(candidate[1]-0.5*self.occupancyGrid.getHeightInCells())**2
 
                         if (d2 < smallestD2):

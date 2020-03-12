@@ -3,12 +3,15 @@ import threading
 import math
 import time
 
+from math import pow,atan2,sqrt,pi
 from comp0037_mapper.msg import *
 from comp0037_mapper.srv import *
 from comp0037_reactive_planner_controller.srv import *
 from comp0037_reactive_planner_controller.occupancy_grid import OccupancyGrid
 from comp0037_reactive_planner_controller.grid_drawer import OccupancyGridDrawer
 from geometry_msgs.msg  import Twist
+from geometry_msgs.msg  import Pose2D
+from nav_msgs.msg import Odometry
 
 class ExplorerNodeBase(object):
 
@@ -28,6 +31,10 @@ class ExplorerNodeBase(object):
         # Subscribe to get the map update messages
         self.mapUpdateSubscriber = rospy.Subscriber('updated_map', MapUpdate, self.mapUpdateCallback)
         self.noMapReceived = True
+
+        self.currentOdometrySubscriber = rospy.Subscriber('/robot0/odom', Odometry, self.odometryCallback)
+
+        self.pose = Pose2D()
 
         # Clear the map variables
         self.occupancyGrid = None
@@ -56,7 +63,24 @@ class ExplorerNodeBase(object):
             mapUpdate = mapRequestService(True)
             
         self.mapUpdateCallback(mapUpdate.initialMapUpdate)
+    
+    def odometryCallback(self, odometry):
+        odometryPose = odometry.pose.pose
+
+        pose = Pose2D()
+
+        position = odometryPose.position
+        orientation = odometryPose.orientation
         
+        pose.x = position.x
+        pose.y = position.y
+        pose.theta = 2 * atan2(orientation.z, orientation.w)
+        self.pose = pose
+
+    def getCurrentPosition(self):
+        currentCoords = (self.pose.x,self.pose.y)
+        return currentCoords
+
     def mapUpdateCallback(self, msg):
         rospy.loginfo("map update received")
         
