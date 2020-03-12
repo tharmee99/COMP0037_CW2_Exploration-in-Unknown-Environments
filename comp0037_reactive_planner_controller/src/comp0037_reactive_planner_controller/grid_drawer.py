@@ -181,10 +181,14 @@ class OccupancyGridDrawer(BaseDrawer):
             if rospy.is_shutdown():
                 return
             for j in range(cellExtent[1]):
-                cellWeight = 1.0 - self.occupancyGrid.getCell(i, j)
-                hexWeight = '{:02x}'.format(int(cellWeight*255))
-                colour = '#' + hexWeight + hexWeight + hexWeight
-                self.rectangles[i][j].setFill(colour);
+                if self.occupancyGrid.frontierCell[i][j]:
+                    colour = '#' + "FFFF00"
+                    self.rectangles[i][j].setFill(colour);
+                else:
+                    cellWeight = 1.0 - self.occupancyGrid.getCell(i, j)
+                    hexWeight = '{:02x}'.format(int(cellWeight*255))
+                    colour = '#' + hexWeight + hexWeight + hexWeight
+                    self.rectangles[i][j].setFill(colour);
 
                 
     def reset(self):
