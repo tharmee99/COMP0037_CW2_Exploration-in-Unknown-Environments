@@ -64,9 +64,7 @@ class ExplorerNodeBase(object):
             self.kickstartSimulator()
             mapUpdate = mapRequestService(True)
             
-        self.mapUpdateCallback(mapUpdate.initialMapUpdate)
-
-        
+        self.mapUpdateCallback(mapUpdate.initialMapUpdate)    
     
     def odometryCallback(self, odometry):
         odometryPose = odometry.pose.pose

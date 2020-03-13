@@ -30,7 +30,10 @@ class OccupancyGrid(object):
         self.height = heightInCells * self.resolution
         self.extent = (self.width, self.height)
         self.grid = [[initialValue for y in range(self.heightInCells)] for x in range(self.widthInCells)]
+        
+        # Used by explorerNode and OccupancyGridDrawer
         self.frontierCell = [[False for y in range(self.heightInCells)] for x in range(self.widthInCells)]
+        self.blacklistCell = [[False for y in range(self.heightInCells)] for x in range(self.widthInCells)]
 
     # Construct the class from a map update message
     @classmethod

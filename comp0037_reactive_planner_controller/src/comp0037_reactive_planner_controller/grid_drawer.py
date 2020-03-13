@@ -181,7 +181,10 @@ class OccupancyGridDrawer(BaseDrawer):
             if rospy.is_shutdown():
                 return
             for j in range(cellExtent[1]):
-                if self.occupancyGrid.frontierCell[i][j]:
+                if self.occupancyGrid.blacklistCell[i][j]:
+                    colour = '#' + "FF0000"
+                    self.rectangles[i][j].setFill(colour);
+                elif self.occupancyGrid.frontierCell[i][j]:
                     colour = '#' + "FFFF00"
                     self.rectangles[i][j].setFill(colour);
                 else:

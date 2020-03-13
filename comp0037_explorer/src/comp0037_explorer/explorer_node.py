@@ -11,19 +11,32 @@ class ExplorerNode(ExplorerNodeBase):
         ExplorerNodeBase.__init__(self)
         self.blackList = []
 
+        self.frontierClusters = []
+
     def updateFrontiers(self):
-        
-        print("-----------------------")
+
+        print(self.pose.x)
 
         for x in range(0, self.deltaOccupancyGrid.getWidthInCells()):
             for y in range(0, self.deltaOccupancyGrid.getHeightInCells()):
                 candidate = (x,y)
+
+                # If the current cell is labelled as a frontier cell but is no longer a frontier cell
+                # Remove the cell from the frontierCells list
                 if (candidate in self.frontierCells) and (not self.isFrontierCell(x, y)):
                     self.frontierCells.remove(candidate)
                     self.occupancyGrid.frontierCell[x][y] = False
+
+                # If a change occured to this cell and the cell is now a frontier cell add the cell to
+                # the frontierCells list
                 if (self.deltaOccupancyGrid.getCell(x,y) == 1.0) and (self.isFrontierCell(x, y)):
                     self.frontierCells.append(candidate)
                     self.occupancyGrid.frontierCell[x][y] = True
+
+        self.updateFrontierClusters()
+
+    def updateFrontierClusters(self):
+        pass
 
     def chooseNewDestination(self):
 #         print 'blackList:'
@@ -58,6 +71,8 @@ class ExplorerNode(ExplorerNodeBase):
 
     def destinationReached(self, goal, goalReached):
         if goalReached is False:
-#             print 'Adding ' + str(goal) + ' to the naughty step'
+            print("-----------------------------------------------------")
+            print 'Adding ' + str(goal) + ' to the naughty step'
             self.blackList.append(goal)
+            self.occupancyGrid.blacklistCell[goal[0]][goal[1]] = True
             
