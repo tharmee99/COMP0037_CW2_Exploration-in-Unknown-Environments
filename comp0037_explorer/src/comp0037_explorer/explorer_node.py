@@ -9,10 +9,7 @@ class ExplorerNode(ExplorerNodeBase):
 
     def __init__(self):
         ExplorerNodeBase.__init__(self)
-
         self.blackList = []
-
-        self.frontierCells = []
 
     def updateFrontiers(self):
         
@@ -20,15 +17,13 @@ class ExplorerNode(ExplorerNodeBase):
 
         for x in range(0, self.deltaOccupancyGrid.getWidthInCells()):
             for y in range(0, self.deltaOccupancyGrid.getHeightInCells()):
-                if (self.deltaOccupancyGrid.getCell(x,y) == 1.0):
-                    candidate = (x,y)
-                    if (candidate in self.frontierCells) and (not self.isFrontierCell(x, y)):
-                        self.frontierCells.remove(candidate)
-                        self.occupancyGrid.frontierCell[x][y] = False
-
-                    if (self.isFrontierCell(x, y)):
-                        self.frontierCells.append(candidate)
-                        self.occupancyGrid.frontierCell[x][y] = True
+                candidate = (x,y)
+                if (candidate in self.frontierCells) and (not self.isFrontierCell(x, y)):
+                    self.frontierCells.remove(candidate)
+                    self.occupancyGrid.frontierCell[x][y] = False
+                if (self.deltaOccupancyGrid.getCell(x,y) == 1.0) and (self.isFrontierCell(x, y)):
+                    self.frontierCells.append(candidate)
+                    self.occupancyGrid.frontierCell[x][y] = True
 
     def chooseNewDestination(self):
 #         print 'blackList:'

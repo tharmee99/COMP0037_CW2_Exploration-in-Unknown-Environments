@@ -40,6 +40,8 @@ class ExplorerNodeBase(object):
         self.occupancyGrid = None
         self.deltaOccupancyGrid = None
 
+        self.frontierCells = []
+
         # Flags used to control the graphical output. Note that we
         # can't create the drawers until we receive the first map
         # message.
@@ -63,6 +65,8 @@ class ExplorerNodeBase(object):
             mapUpdate = mapRequestService(True)
             
         self.mapUpdateCallback(mapUpdate.initialMapUpdate)
+
+        
     
     def odometryCallback(self, odometry):
         odometryPose = odometry.pose.pose
