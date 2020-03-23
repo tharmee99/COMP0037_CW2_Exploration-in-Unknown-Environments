@@ -95,7 +95,8 @@ class ExplorerNode(ExplorerNodeBase):
         min_coords = (float('inf'), float('inf'))
 
         # TODO: Currently choosing random cell in largest frontier, Replace with middle cell
-        # TODO: Add black-list check
+        # TODO: Add black-list check, turn frontier list into prioritity queue and pop until
+        #       nada then return false (Ask Tam for more info)
 
         pos = random.randint(0, maxNum-1)
         return True, bestFrontier[pos]
