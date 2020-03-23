@@ -76,8 +76,6 @@ class ExplorerNode(ExplorerNodeBase):
                     map_queue.append(cell)
                     cell_state[cell[0]][cell[1]] = 1
             cell_state[p[0]][p[1]] = 2
-        print("------------")
-        print(len(frontiers))
         return frontiers
 
     # Choosing the next destination based purely on the WFD algorithm
