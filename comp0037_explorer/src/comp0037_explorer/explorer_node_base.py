@@ -40,7 +40,8 @@ class ExplorerNodeBase(object):
         self.occupancyGrid = None
         self.deltaOccupancyGrid = None
 
-        self.frontierCells = []
+        self.frontiers = []
+        self.algorthim = 1
 
         # Flags used to control the graphical output. Note that we
         # can't create the drawers until we receive the first map
@@ -104,24 +105,27 @@ class ExplorerNodeBase(object):
     # This method determines if a cell is a frontier cell or not. A
     # frontier cell is open and has at least one neighbour which is
     # unknown.
-    def isFrontierCell(self, x, y):
+    def isFrontierCell(self, x, y, occupancyGrid=False):
+
+        if not occupancyGrid:
+            occupancyGrid = self.occupancyGrid
 
         # Check the cell to see if it's open
-        if self.occupancyGrid.getCell(x, y) != 0:
+        if occupancyGrid.getCell(x, y) != 0:
             return False
 
         # Check the neighbouring cells; if at least one of them is unknown, it's a frontier
-        return self.checkIfCellIsUnknown(x, y, -1, -1) | self.checkIfCellIsUnknown(x, y, 0, -1) \
-            | self.checkIfCellIsUnknown(x, y, 1, -1) | self.checkIfCellIsUnknown(x, y, 1, 0) \
-            | self.checkIfCellIsUnknown(x, y, 1, 1) | self.checkIfCellIsUnknown(x, y, 0, 1) \
-            | self.checkIfCellIsUnknown(x, y, -1, 1) | self.checkIfCellIsUnknown(x, y, -1, 0)
+        return self.checkIfCellIsUnknown(x, y, -1, -1, occupancyGrid) | self.checkIfCellIsUnknown(x, y, 0, -1, occupancyGrid) \
+            | self.checkIfCellIsUnknown(x, y, 1, -1, occupancyGrid) | self.checkIfCellIsUnknown(x, y, 1, 0, occupancyGrid) \
+            | self.checkIfCellIsUnknown(x, y, 1, 1, occupancyGrid) | self.checkIfCellIsUnknown(x, y, 0, 1, occupancyGrid) \
+            | self.checkIfCellIsUnknown(x, y, -1, 1, occupancyGrid) | self.checkIfCellIsUnknown(x, y, -1, 0, occupancyGrid)
             
-    def checkIfCellIsUnknown(self, x, y, offsetX, offsetY):
+    def checkIfCellIsUnknown(self, x, y, offsetX, offsetY, occupancyGrid):
         newX = x + offsetX
         newY = y + offsetY
-        return (newX >= 0) & (newX < self.occupancyGrid.getWidthInCells()) \
-            & (newY >= 0) & (newY < self.occupancyGrid.getHeightInCells()) \
-            & (self.occupancyGrid.getCell(newX, newY) == 0.5)
+        return (newX >= 0) & (newX < occupancyGrid.getWidthInCells()) \
+            & (newY >= 0) & (newY < occupancyGrid.getHeightInCells()) \
+            & (occupancyGrid.getCell(newX, newY) == 0.5)
 
     # You should provide your own implementation of this method which
     # maintains and updates the frontiers.  The method should return
@@ -198,7 +202,7 @@ class ExplorerNodeBase(object):
         coveredCells = 0.0
         for x in range(0, self.occupancyGrid.getWidthInCells()):
             for y in range(0, self.occupancyGrid.getHeightInCells()):
-                if not (self.checkIfCellIsUnknown(x,y,0,0)):
+                if not (self.checkIfCellIsUnknown(x,y,0,0,self.occupancyGrid)):
                     coveredCells = coveredCells + 1
         
         coverage = coveredCells/totalCells
