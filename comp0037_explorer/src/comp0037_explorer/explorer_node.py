@@ -25,7 +25,7 @@ class ExplorerNode(ExplorerNodeBase):
 
     # Implemntation of the Wavefront Detection (WFD) algorithm 
     def getFrontiers(self, pose, occupancyGrid):
-        frontiers = []
+        frontiers = PriorityQueue()
         cell_state = [[0 for y in range(occupancyGrid.heightInCells)] for x in range(occupancyGrid.widthInCells)]
 
         # 1 - Map Open List
@@ -35,7 +35,6 @@ class ExplorerNode(ExplorerNodeBase):
 
         map_queue = deque()
         map_queue.append(pose)
-        print(type(pose[0]))
         cell_state[pose[0]][pose[1]] = 1
 
         while map_queue:
@@ -65,7 +64,8 @@ class ExplorerNode(ExplorerNodeBase):
                                 cell_state[cell[0]][cell[1]] = 3
                     cell_state[q[0]][q[1]] = 4
                 
-                frontiers.append((len(newFrontier),newFrontier))
+                frontiers.put((-1*len(newFrontier),newFrontier))
+
                 for cell in newFrontier:
                     current_cell_state = cell_state[cell[0]][cell[1]]
                     cell_state[cell[0]][cell[1]] = 2
@@ -76,37 +76,34 @@ class ExplorerNode(ExplorerNodeBase):
                     map_queue.append(cell)
                     cell_state[cell[0]][cell[1]] = 1
             cell_state[p[0]][p[1]] = 2
+            
         return frontiers
 
     # Choosing the next destination based purely on the WFD algorithm
     def chooseNewDestination(self):
-        maxNum = 0
-        bestFrontier = []
-
-        if len(self.frontiers) == 0:
-            return False, None
-
-        for frontier in self.frontiers:
-            if frontier[0] > maxNum:
-                maxNum = frontier[0]
-                bestFrontier = frontier[1]
+        destination = None
+        nextCellValid = False
+        loop_flg = True
         
-        max_coords = (0,0)
-        min_coords = (float('inf'), float('inf'))
+        while (not self.frontiers.empty()) and (loop_flg):
+            bestFrontier = self.frontiers.get()
 
-        # TODO: Currently choosing random cell in largest frontier, Replace with middle cell
-        # TODO: Add black-list check, turn frontier list into prioritity queue and pop until
-        #       nada then return false (Ask Tam for more info)
+            for cell in bestFrontier[1]:
+                if cell not in self.blackList:
+                    destination = cell
+                    nextCellValid = True
+                    loop_flg = False
 
-        pos = random.randint(0, maxNum-1)
-        return True, bestFrontier[pos]
+                    bestFrontier[1].remove(cell)
+                    self.frontiers.put((bestFrontier))
+                    break
+
+        # TODO: Currently choosing first cell in largest frontier, Replace with middle cell
+
+        return nextCellValid, destination
 
     # The original implemented algorithm to choose next destination
     def chooseNewDestinationOld(self):
-#         print 'blackList:'
-#         for coords in self.blackList:
-#             print str(coords)
-
         candidateGood = False
         destination = None
         smallestD2 = float('inf')
@@ -134,8 +131,6 @@ class ExplorerNode(ExplorerNodeBase):
 
     def destinationReached(self, goal, goalReached):
         if goalReached is False:
-            print("-----------------------------------------------------")
-            print 'Adding ' + str(goal) + ' to the naughty step'
             self.blackList.append(goal)
             self.occupancyGrid.blacklistCell[goal[0]][goal[1]] = True
             

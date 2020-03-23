@@ -12,6 +12,7 @@ from comp0037_reactive_planner_controller.grid_drawer import OccupancyGridDrawer
 from geometry_msgs.msg  import Twist
 from geometry_msgs.msg  import Pose2D
 from nav_msgs.msg import Odometry
+from Queue import PriorityQueue
 
 class ExplorerNodeBase(object):
 
@@ -40,7 +41,7 @@ class ExplorerNodeBase(object):
         self.occupancyGrid = None
         self.deltaOccupancyGrid = None
 
-        self.frontiers = []
+        self.frontiers = PriorityQueue()
         self.algorthim = 1
 
         # Flags used to control the graphical output. Note that we
@@ -258,11 +259,12 @@ class ExplorerNodeBase(object):
                 else:
                     self.completed = True
                     endTime = time.time()
-                    self.explorer.timeTakenToExplore = endTime - startTime
-                    self.explorer.coverage = self.explorer.computeCoverage()
+                    time_scale_factor = rospy.get_param('time_scale_factor',1.5)
+                    self.explorer.timeTakenToExplore = (endTime - startTime)*time_scale_factor
+                    self.explorer.coverage = self.explorer.computeCoverage()    
 
-                    print("Time taken to explore map: " + self.explorer.timeTakenToExplore + "s")
-                    print("Proportion of map explored: " + self.explorer.coverage)
+                    print("Time taken to explore map: " + str(self.explorer.timeTakenToExplore) + "s")
+                    print("Proportion of map explored: " + str(self.explorer.coverage))
 
     def run(self):
 
