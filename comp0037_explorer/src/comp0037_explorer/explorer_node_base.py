@@ -102,6 +102,18 @@ class ExplorerNodeBase(object):
         # Flag there's something to show graphically
         self.visualisationUpdateRequired = True
 
+    # Get known neighbouring cells
+    def getNeighbouringCells(self, cell, occupancyGrid):
+        adj_cells = []
+        increments = [(0,-1),(1,-1),(1,0),(1,1),(0,1),(-1,1),(-1,0),(-1,-1)]
+
+        for d in increments:
+            new_cell = (cell[0]+d[0], cell[1]+d[1])
+            if (occupancyGrid.grid[new_cell[0]][new_cell[1]] != 0.5):
+                adj_cells.append(new_cell)
+
+        return adj_cells
+
     # This method determines if a cell is a frontier cell or not. A
     # frontier cell is open and has at least one neighbour which is
     # unknown.
