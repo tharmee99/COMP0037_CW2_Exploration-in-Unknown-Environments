@@ -17,7 +17,6 @@ class ExplorerNode(ExplorerNodeBase):
         worldPose = (self.pose.x, self.pose.y)
         gridPose = self.occupancyGrid.getCellCoordinatesFromWorldCoordinates(worldPose)
         self.frontiers = self.getFrontiers(gridPose, self.occupancyGrid)
-        pass
 
     def updateFrontiersFFD(self):
         # TODO: Implement FFD frontier update
@@ -84,23 +83,67 @@ class ExplorerNode(ExplorerNodeBase):
         destination = None
         nextCellValid = False
         loop_flg = True
-        
+        print("----------------------------------------------------asdasd")
+        print(self.frontiers.empty())
         while (not self.frontiers.empty()) and (loop_flg):
             bestFrontier = self.frontiers.get()
+            print(len(bestFrontier[1]))
+            if (len(bestFrontier[1]) == 0):
+                print("Asdasdasd")
+                print(self.frontiers.empty())
+                continue
 
-            for cell in bestFrontier[1]:
-                if cell not in self.blackList:
-                    destination = cell
-                    nextCellValid = True
-                    loop_flg = False
+            cell = self.getmiddleCell(bestFrontier[1])
+            if cell not in self.blackList:
+                destination = cell
+                nextCellValid = True
+                loop_flg = False
 
-                    bestFrontier[1].remove(cell)
-                    self.frontiers.put((bestFrontier))
-                    break
+                bestFrontier[1].remove(cell)
+                self.frontiers.put((bestFrontier))
+                break
 
         # TODO: Currently choosing first cell in largest frontier, Replace with middle cell
 
+        print(nextCellValid)
         return nextCellValid, destination
+
+    def getmiddleCell(self, frontierCells):
+        
+        goodCells = []
+
+        for cell in frontierCells:
+            if cell not in self.blackList:
+                goodCells.append(cell)
+
+        min_coords = [float('inf'),float('inf')]
+        max_coords = [0,0]
+
+        for cell in goodCells:
+            if (cell[0] > max_coords[0]):
+                max_coords[0] = cell[0]
+            
+            if (cell[1] > max_coords[1]):
+                max_coords[1] = cell[1]
+
+            if (cell[0] < min_coords[0]):
+                min_coords[0] = cell[0]
+
+            if (cell[1] < min_coords[1]):
+                min_coords[1] = cell[1]
+        
+        midpoint = ((min_coords[0]+max_coords[0])/2,(min_coords[1]+max_coords[1])/2)
+
+        min_d2 = float('inf')
+        candidate = None
+        
+        for cell in goodCells:
+            d2 = (cell[0] - midpoint[0])**2 + (cell[1] - midpoint[1])**2
+            if d2 < min_d2:
+                candidate = cell
+                min_d2 = d2
+
+        return candidate
 
     # The original implemented algorithm to choose next destination
     def chooseNewDestinationOld(self):
@@ -131,6 +174,8 @@ class ExplorerNode(ExplorerNodeBase):
 
     def destinationReached(self, goal, goalReached):
         if goalReached is False:
+            print("OH NOOOO" + str(goal))
             self.blackList.append(goal)
             self.occupancyGrid.blacklistCell[goal[0]][goal[1]] = True
+            self.visualisationUpdateRequired = True
             
