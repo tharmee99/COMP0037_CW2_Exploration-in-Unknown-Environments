@@ -18,10 +18,6 @@ class ExplorerNode(ExplorerNodeBase):
         gridPose = self.occupancyGrid.getCellCoordinatesFromWorldCoordinates(worldPose)
         self.frontiers = self.getFrontiers(gridPose, self.occupancyGrid)
 
-    def updateFrontiersFFD(self):
-        # TODO: Implement FFD frontier update
-        pass
-
     # Implemntation of the Wavefront Detection (WFD) algorithm 
     def getFrontiers(self, pose, occupancyGrid):
         frontiers = PriorityQueue()

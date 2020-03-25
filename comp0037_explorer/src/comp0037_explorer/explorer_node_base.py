@@ -42,7 +42,11 @@ class ExplorerNodeBase(object):
         self.deltaOccupancyGrid = None
 
         self.frontiers = PriorityQueue()
-        self.algorthim = 1
+
+        # Choosing what explorer to use. 
+        # 0 - Original inefficient explorer
+        # 1 - WFD explorer going to the middle of the largest frontier
+        self.explorerAlgorithm = 1
 
         # Flags used to control the graphical output. Note that we
         # can't create the drawers until we receive the first map
@@ -98,7 +102,8 @@ class ExplorerNodeBase(object):
         self.deltaOccupancyGrid.updateGridFromVector(msg.deltaOccupancyGrid)
         
         # Update the frontiers
-        self.updateFrontiers()
+        if (self.explorerAlgorithm == 1):
+            self.updateFrontiers()
 
         # Flag there's something to show graphically
         self.visualisationUpdateRequired = True
@@ -221,6 +226,16 @@ class ExplorerNodeBase(object):
         coverage = coveredCells/totalCells
         return coverage
 
+    def exportData(self):
+        # TODO : Implement exporting method
+        # Need to write:
+        # - self.coverage
+        # - self.timeTakenToExplore
+        # - self.explorerAlgorithm
+        # - rosparam: use_search_grid_to_validate_start_and_end
+        pass
+
+
     class ExplorerThread(threading.Thread):
         def __init__(self, explorer):
             threading.Thread.__init__(self)
@@ -238,7 +253,8 @@ class ExplorerNodeBase(object):
         def run(self):
 
             self.running = True
-            startTime = time.time()
+            # startTime = time.time()
+            startTime = rospy.get_time()
 
             while (rospy.is_shutdown() is False) & (self.completed is False):
 
@@ -248,7 +264,10 @@ class ExplorerNodeBase(object):
                 
 
                 # Create a new robot waypoint if required
-                newDestinationAvailable, newDestination = self.explorer.chooseNewDestination()
+                if (self.explorer.explorerAlgorithm == 1):
+                    newDestinationAvailable, newDestination = self.explorer.chooseNewDestination()
+                else:
+                    newDestinationAvailable, newDestination = self.explorer.chooseNewDestinationOld()
 
                 # Convert to world coordinates, because this is what the robot understands
                 if newDestinationAvailable is True:
@@ -258,13 +277,17 @@ class ExplorerNodeBase(object):
                     self.explorer.destinationReached(newDestination, attempt)
                 else:
                     self.completed = True
-                    endTime = time.time()
+                    # endTime = time.time()
+                    endTime = rospy.get_time()
                     time_scale_factor = rospy.get_param('time_scale_factor',1.5)
-                    self.explorer.timeTakenToExplore = (endTime - startTime)*time_scale_factor
-                    self.explorer.coverage = self.explorer.computeCoverage()    
+                    self.explorer.timeTakenToExplore = (endTime - startTime)
+                    self.explorer.coverage = self.explorer.computeCoverage() 
 
+                    print(time_scale_factor)
                     print("Time taken to explore map: " + str(self.explorer.timeTakenToExplore) + "s")
                     print("Proportion of map explored: " + str(self.explorer.coverage))
+
+                    self.explorer.exportData()
 
     def run(self):
 
