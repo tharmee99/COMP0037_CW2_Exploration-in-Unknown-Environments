@@ -12,6 +12,7 @@ from comp0037_reactive_planner_controller.grid_drawer import OccupancyGridDrawer
 from geometry_msgs.msg  import Twist
 from geometry_msgs.msg  import Pose2D
 from nav_msgs.msg import Odometry
+from Queue import PriorityQueue
 
 class ExplorerNodeBase(object):
 
@@ -40,7 +41,12 @@ class ExplorerNodeBase(object):
         self.occupancyGrid = None
         self.deltaOccupancyGrid = None
 
-        self.frontierCells = []
+        self.frontiers = PriorityQueue()
+
+        # Choosing what explorer to use. 
+        # 0 - Original inefficient explorer
+        # 1 - WFD explorer going to the middle of the largest frontier
+        self.explorerAlgorithm = 1
 
         # Flags used to control the graphical output. Note that we
         # can't create the drawers until we receive the first map
@@ -96,32 +102,48 @@ class ExplorerNodeBase(object):
         self.deltaOccupancyGrid.updateGridFromVector(msg.deltaOccupancyGrid)
         
         # Update the frontiers
-        self.updateFrontiers()
+        if (self.explorerAlgorithm == 1):
+            self.updateFrontiers()
 
         # Flag there's something to show graphically
         self.visualisationUpdateRequired = True
 
+    # Get known neighbouring cells
+    def getNeighbouringCells(self, cell, occupancyGrid):
+        adj_cells = []
+        increments = [(0,-1),(1,-1),(1,0),(1,1),(0,1),(-1,1),(-1,0),(-1,-1)]
+
+        for d in increments:
+            new_cell = (cell[0]+d[0], cell[1]+d[1])
+            if (occupancyGrid.grid[new_cell[0]][new_cell[1]] != 0.5):
+                adj_cells.append(new_cell)
+
+        return adj_cells
+
     # This method determines if a cell is a frontier cell or not. A
     # frontier cell is open and has at least one neighbour which is
     # unknown.
-    def isFrontierCell(self, x, y):
+    def isFrontierCell(self, x, y, occupancyGrid=False):
+
+        if not occupancyGrid:
+            occupancyGrid = self.occupancyGrid
 
         # Check the cell to see if it's open
-        if self.occupancyGrid.getCell(x, y) != 0:
+        if occupancyGrid.getCell(x, y) != 0:
             return False
 
         # Check the neighbouring cells; if at least one of them is unknown, it's a frontier
-        return self.checkIfCellIsUnknown(x, y, -1, -1) | self.checkIfCellIsUnknown(x, y, 0, -1) \
-            | self.checkIfCellIsUnknown(x, y, 1, -1) | self.checkIfCellIsUnknown(x, y, 1, 0) \
-            | self.checkIfCellIsUnknown(x, y, 1, 1) | self.checkIfCellIsUnknown(x, y, 0, 1) \
-            | self.checkIfCellIsUnknown(x, y, -1, 1) | self.checkIfCellIsUnknown(x, y, -1, 0)
+        return self.checkIfCellIsUnknown(x, y, -1, -1, occupancyGrid) | self.checkIfCellIsUnknown(x, y, 0, -1, occupancyGrid) \
+            | self.checkIfCellIsUnknown(x, y, 1, -1, occupancyGrid) | self.checkIfCellIsUnknown(x, y, 1, 0, occupancyGrid) \
+            | self.checkIfCellIsUnknown(x, y, 1, 1, occupancyGrid) | self.checkIfCellIsUnknown(x, y, 0, 1, occupancyGrid) \
+            | self.checkIfCellIsUnknown(x, y, -1, 1, occupancyGrid) | self.checkIfCellIsUnknown(x, y, -1, 0, occupancyGrid)
             
-    def checkIfCellIsUnknown(self, x, y, offsetX, offsetY):
+    def checkIfCellIsUnknown(self, x, y, offsetX, offsetY, occupancyGrid):
         newX = x + offsetX
         newY = y + offsetY
-        return (newX >= 0) & (newX < self.occupancyGrid.getWidthInCells()) \
-            & (newY >= 0) & (newY < self.occupancyGrid.getHeightInCells()) \
-            & (self.occupancyGrid.getCell(newX, newY) == 0.5)
+        return (newX >= 0) & (newX < occupancyGrid.getWidthInCells()) \
+            & (newY >= 0) & (newY < occupancyGrid.getHeightInCells()) \
+            & (occupancyGrid.getCell(newX, newY) == 0.5)
 
     # You should provide your own implementation of this method which
     # maintains and updates the frontiers.  The method should return
@@ -198,11 +220,21 @@ class ExplorerNodeBase(object):
         coveredCells = 0.0
         for x in range(0, self.occupancyGrid.getWidthInCells()):
             for y in range(0, self.occupancyGrid.getHeightInCells()):
-                if not (self.checkIfCellIsUnknown(x,y,0,0)):
+                if not (self.checkIfCellIsUnknown(x,y,0,0,self.occupancyGrid)):
                     coveredCells = coveredCells + 1
         
         coverage = coveredCells/totalCells
         return coverage
+
+    def exportData(self):
+        # TODO : Implement exporting method
+        # Need to write:
+        # - self.coverage
+        # - self.timeTakenToExplore
+        # - self.explorerAlgorithm
+        # - rosparam: use_search_grid_to_validate_start_and_end
+        pass
+
 
     class ExplorerThread(threading.Thread):
         def __init__(self, explorer):
@@ -220,7 +252,8 @@ class ExplorerNodeBase(object):
         def run(self):
 
             self.running = True
-            startTime = time.time()
+            # startTime = time.time()
+            startTime = rospy.get_time()
 
             while (rospy.is_shutdown() is False) & (self.completed is False):
 
@@ -229,7 +262,10 @@ class ExplorerNodeBase(object):
                 # messages. To do this, we get the robot to
                 
                 # Create a new robot waypoint if required
-                newDestinationAvailable, newDestination = self.explorer.chooseNewDestination()
+                if (self.explorer.explorerAlgorithm == 1):
+                    newDestinationAvailable, newDestination = self.explorer.chooseNewDestination()
+                else:
+                    newDestinationAvailable, newDestination = self.explorer.chooseNewDestinationOld()
 
                 # Convert to world coordinates, because this is what the robot understands
                 if newDestinationAvailable is True:
@@ -239,12 +275,17 @@ class ExplorerNodeBase(object):
                     self.explorer.destinationReached(newDestination, attempt)
                 else:
                     self.completed = True
-                    endTime = time.time()
-                    self.explorer.timeTakenToExplore = endTime - startTime
-                    self.explorer.coverage = self.explorer.computeCoverage()
+                    # endTime = time.time()
+                    endTime = rospy.get_time()
+                    time_scale_factor = rospy.get_param('time_scale_factor',1.5)
+                    self.explorer.timeTakenToExplore = (endTime - startTime)
+                    self.explorer.coverage = self.explorer.computeCoverage() 
 
-                    print("Time taken to explore map: " + self.explorer.timeTakenToExplore + "s")
-                    print("Proportion of map explored: " + self.explorer.coverage)
+                    print(time_scale_factor)
+                    print("Time taken to explore map: " + str(self.explorer.timeTakenToExplore) + "s")
+                    print("Proportion of map explored: " + str(self.explorer.coverage))
+
+                    self.explorer.exportData()
 
     def run(self):
 

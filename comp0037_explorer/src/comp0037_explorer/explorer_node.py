@@ -2,8 +2,8 @@ import rospy
 
 from explorer_node_base import ExplorerNodeBase
 from Queue import PriorityQueue
-# This class implements a super dumb explorer. It goes through the
-# current map and marks the first cell it sees as the one to go for
+from collections import deque
+import random 
 
 class ExplorerNode(ExplorerNodeBase):
 
@@ -11,38 +11,138 @@ class ExplorerNode(ExplorerNodeBase):
         ExplorerNodeBase.__init__(self)
         self.blackList = []
 
-        self.frontierClusters = []
-
     def updateFrontiers(self):
+        self.occupancyGrid.frontierCell = [[False for y in range(self.occupancyGrid.heightInCells)] for x in range(self.occupancyGrid.widthInCells)]
+        
+        worldPose = (self.pose.x, self.pose.y)
+        gridPose = self.occupancyGrid.getCellCoordinatesFromWorldCoordinates(worldPose)
+        self.frontiers = self.getFrontiers(gridPose, self.occupancyGrid)
 
-        print(self.pose.x)
+    # Implemntation of the Wavefront Detection (WFD) algorithm 
+    def getFrontiers(self, pose, occupancyGrid):
+        frontiers = PriorityQueue()
+        cell_state = [[0 for y in range(occupancyGrid.heightInCells)] for x in range(occupancyGrid.widthInCells)]
 
-        for x in range(0, self.deltaOccupancyGrid.getWidthInCells()):
-            for y in range(0, self.deltaOccupancyGrid.getHeightInCells()):
-                candidate = (x,y)
+        # 1 - Map Open List
+        # 2 - Map Close List
+        # 3 - Frontier Open List
+        # 4 - Frontier Close List
 
-                # If the current cell is labelled as a frontier cell but is no longer a frontier cell
-                # Remove the cell from the frontierCells list
-                if (candidate in self.frontierCells) and (not self.isFrontierCell(x, y)):
-                    self.frontierCells.remove(candidate)
-                    self.occupancyGrid.frontierCell[x][y] = False
+        map_queue = deque()
+        map_queue.append(pose)
+        cell_state[pose[0]][pose[1]] = 1
 
-                # If a change occured to this cell and the cell is now a frontier cell add the cell to
-                # the frontierCells list
-                if (self.deltaOccupancyGrid.getCell(x,y) == 1.0) and (self.isFrontierCell(x, y)):
-                    self.frontierCells.append(candidate)
-                    self.occupancyGrid.frontierCell[x][y] = True
+        while map_queue:
+            p = map_queue.popleft()
 
-        self.updateFrontierClusters()
+            if (cell_state[p[0]][p[1]] == 2):
+                continue
+            if (self.isFrontierCell(p[0],p[1],occupancyGrid)):
+                frontier_queue = deque()
+                newFrontier = []
+                frontier_queue.append(p)
+                cell_state[p[0]][p[1]] = 3
 
-    def updateFrontierClusters(self):
-        pass
+                while frontier_queue:
+                    q = frontier_queue.popleft()
+                    q_cell_state = cell_state[q[0]][q[1]]
+                    if ((q_cell_state == 2) or (q_cell_state == 4)):
+                        continue
+                    if (self.isFrontierCell(q[0],q[1],occupancyGrid)):
+                        newFrontier.append(q)
+                        self.occupancyGrid.frontierCell[q[0]][q[1]] = True
+                        adj_cells = self.getNeighbouringCells(q, occupancyGrid)
+                        for cell in adj_cells:
+                            current_cell_state = cell_state[cell[0]][cell[1]]
+                            if ((current_cell_state == 0) or (current_cell_state == 1)):
+                                frontier_queue.append(cell)
+                                cell_state[cell[0]][cell[1]] = 3
+                    cell_state[q[0]][q[1]] = 4
+                
+                frontiers.put((-1*len(newFrontier),newFrontier))
 
+                for cell in newFrontier:
+                    current_cell_state = cell_state[cell[0]][cell[1]]
+                    cell_state[cell[0]][cell[1]] = 2
+            adj_cells = self.getNeighbouringCells(p, occupancyGrid)
+            for cell in adj_cells:
+                current_cell_state = cell_state[cell[0]][cell[1]]
+                if not ((current_cell_state == 1) or (current_cell_state == 2)):
+                    map_queue.append(cell)
+                    cell_state[cell[0]][cell[1]] = 1
+            cell_state[p[0]][p[1]] = 2
+            
+        return frontiers
+
+    # Choosing the next destination based purely on the WFD algorithm
     def chooseNewDestination(self):
-#         print 'blackList:'
-#         for coords in self.blackList:
-#             print str(coords)
+        destination = None
+        nextCellValid = False
+        loop_flg = True
+        print("----------------------------------------------------asdasd")
+        print(self.frontiers.empty())
+        while (not self.frontiers.empty()) and (loop_flg):
+            bestFrontier = self.frontiers.get()
+            print(len(bestFrontier[1]))
+            if (len(bestFrontier[1]) == 0):
+                print("Asdasdasd")
+                print(self.frontiers.empty())
+                continue
 
+            cell = self.getmiddleCell(bestFrontier[1])
+            if cell not in self.blackList:
+                destination = cell
+                nextCellValid = True
+                loop_flg = False
+
+                bestFrontier[1].remove(cell)
+                self.frontiers.put((bestFrontier))
+                break
+
+        # TODO: Currently choosing first cell in largest frontier, Replace with middle cell
+
+        print(nextCellValid)
+        return nextCellValid, destination
+
+    def getmiddleCell(self, frontierCells):
+        
+        goodCells = []
+
+        for cell in frontierCells:
+            if cell not in self.blackList:
+                goodCells.append(cell)
+
+        min_coords = [float('inf'),float('inf')]
+        max_coords = [0,0]
+
+        for cell in goodCells:
+            if (cell[0] > max_coords[0]):
+                max_coords[0] = cell[0]
+            
+            if (cell[1] > max_coords[1]):
+                max_coords[1] = cell[1]
+
+            if (cell[0] < min_coords[0]):
+                min_coords[0] = cell[0]
+
+            if (cell[1] < min_coords[1]):
+                min_coords[1] = cell[1]
+        
+        midpoint = ((min_coords[0]+max_coords[0])/2,(min_coords[1]+max_coords[1])/2)
+
+        min_d2 = float('inf')
+        candidate = None
+        
+        for cell in goodCells:
+            d2 = (cell[0] - midpoint[0])**2 + (cell[1] - midpoint[1])**2
+            if d2 < min_d2:
+                candidate = cell
+                min_d2 = d2
+
+        return candidate
+
+    # The original implemented algorithm to choose next destination
+    def chooseNewDestinationOld(self):
         candidateGood = False
         destination = None
         smallestD2 = float('inf')
@@ -66,13 +166,12 @@ class ExplorerNode(ExplorerNodeBase):
                             smallestD2 = d2
 
         # If we got a good candidate, use it
-
         return candidateGood, destination
 
     def destinationReached(self, goal, goalReached):
         if goalReached is False:
-            print("-----------------------------------------------------")
-            print 'Adding ' + str(goal) + ' to the naughty step'
+            print("OH NOOOO" + str(goal))
             self.blackList.append(goal)
             self.occupancyGrid.blacklistCell[goal[0]][goal[1]] = True
+            self.visualisationUpdateRequired = True
             

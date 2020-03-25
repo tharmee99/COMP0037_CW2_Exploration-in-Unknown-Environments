@@ -134,7 +134,7 @@ class GeneralForwardSearchAlgorithm(PlannerBase):
         # path cost to 0.
         self.start = self.searchGrid.getCellFromCoords(startCoords)
 
-         if (self.useSearchGridToValidateStartAndEnd is True) & \
+        if (self.useSearchGridToValidateStartAndEnd is True) & \
             (self.start.label is CellLabel.OBSTRUCTED):
             return False
         
