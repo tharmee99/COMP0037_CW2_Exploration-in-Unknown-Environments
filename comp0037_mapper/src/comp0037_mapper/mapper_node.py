@@ -88,7 +88,7 @@ class MapperNode(object):
         # Set up the subscribers. These track the robot position, speed and laser scans.
         self.mostRecentOdometry = Odometry()
         self.odometrySubscriber = rospy.Subscriber("robot0/odom", Odometry, self.odometryCallback, queue_size=1)
-        self.mostRecentTwist = Twist();
+        self.mostRecentTwist = Twist()
         self.twistSubscriber = rospy.Subscriber('/robot0/cmd_vel', Twist, self.twistCallback, queue_size=1)
         self.laserSubscriber = rospy.Subscriber("robot0/laser_0", LaserScan, self.laserScanCallback, queue_size=1)
 

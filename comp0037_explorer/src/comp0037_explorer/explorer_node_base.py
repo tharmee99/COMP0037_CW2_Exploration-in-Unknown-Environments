@@ -211,7 +211,6 @@ class ExplorerNodeBase(object):
             self.running = False
             self.completed = False;
 
-
         def isRunning(self):
             return self.running
 
@@ -229,7 +228,6 @@ class ExplorerNodeBase(object):
                 # has started, stdr needs a kicking to generate laser
                 # messages. To do this, we get the robot to
                 
-
                 # Create a new robot waypoint if required
                 newDestinationAvailable, newDestination = self.explorer.chooseNewDestination()
 
@@ -269,6 +267,3 @@ class ExplorerNodeBase(object):
             if explorerThread.hasCompleted() is True:
                 explorerThread.join()
                 keepRunning = False
-
-            
-            
