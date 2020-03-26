@@ -2,6 +2,9 @@ import rospy
 import threading
 import math
 import time
+import csv
+import os
+import sys
 
 from math import pow,atan2,sqrt,pi
 from comp0037_mapper.msg import *
@@ -61,7 +64,16 @@ class ExplorerNodeBase(object):
         self.timeTakenToExplore = float('inf')
         self.coverage = 0
 
-        self.exportDirectory ='comp0037_cw2\\export\\explorer_data.csv'
+        taskNum = rospy.get_param('task_num', 0)
+        exportDirectory = ''
+        
+        if (len(sys.argv) > 1):
+            exportDirectory = sys.argv[1]
+
+        self.exportFileDir = ''
+
+        if (taskNum != 0) and (exportDirectory != ''):
+            self.exportFileDir = os.path.join(exportDirectory,("task" + str(taskNum) + ".csv"))
 
         # Request an initial map to get the ball rolling
         rospy.loginfo('Waiting for service request_map_update')
@@ -237,20 +249,26 @@ class ExplorerNodeBase(object):
         # - self.timeTakenToExplore
         # - self.time_scale_factor
         # - rosparam: use_search_grid_to_validate_start_and_end
-        column_headers = ['explorerAlgorithm','coverage','timeTakenToExplore',
-                          'time_scale_factor', 'use_search_grid_to_validate_start_and_end']
+
+        column_headers = ['Explorer Algorithm','Coverage','Time Taken to Explore',
+                          'ROS Time Scale Factor', 'Start/End Validated by Search Grid']
 
         data = [self.explorerAlgorithm, self.coverage, self.timeTakenToExplore,
                 self.time_scale_factor, 
                 rospy.get_param('use_search_grid_to_validate_start_and_end', 'Not Available')]
 
+        print("--------------------------------------------")
+        print(os.path.split(self.exportFileDir))
+
         # If directory doesn't exist create directory
-        if not os.path.exists(os.path.split(self.exportDirectory)[0]):
-            os.makedirs(os.path.split(self.exportDirectory)[0])
+        if not os.path.exists(os.path.split(self.exportFileDir)[0]):
+            print("--------------------------------------------")
+            print(os.path.split(self.exportFileDir))
+            os.makedirs(os.path.split(self.exportFileDir)[0])
 
         # If file doesn't exist create file
-        if(os.path.isfile(self.exportDirectory)):
-            isFileEmpty = (os.stat(self.exportDirectory).st_size == 0)
+        if(os.path.isfile(self.exportFileDir)):
+            isFileEmpty = (os.stat(self.exportFileDir).st_size == 0)
         else:
             isFileEmpty = True
 
@@ -258,13 +276,13 @@ class ExplorerNodeBase(object):
         rowFound=False
 
         if isFileEmpty:
-            with open(self.exportDirectory, 'w') as write_csvfile:
+            with open(self.exportFileDir, 'w') as write_csvfile:
                 # Instanstiate writer
                 writer = csv.writer(write_csvfile)
                 writer.writerow(column_headers)
                 writer.writerow(data)
         else:
-            with open(self.exportDirectory, 'r') as read_csvfile:
+            with open(self.exportFileDir, 'r') as read_csvfile:
                 # Instantiate reader
                 reader = csv.reader(read_csvfile)
                 # Find if row already exists for that planner
@@ -275,20 +293,17 @@ class ExplorerNodeBase(object):
                         rowList.append(row)
             # If row was not found then append file.          
             if(not rowFound):
-                with open(self.exportDirectory, 'a') as write_csvfile:
+                with open(self.exportFileDir, 'a') as write_csvfile:
                     writer = csv.writer(write_csvfile)
                     writer.writerow(data)
             # If row was found then rewrite the whole file without the old row
             else:
-                with open(self.exportDirectory, 'w') as write_csvfile:
+                with open(self.exportFileDir, 'w') as write_csvfile:
                     rowList.append(data)
                     writer = csv.writer(write_csvfile)
                     for row in rowList:
                         writer.writerow(row)
 
-        # print(self.time_scale_factor)
-        # print("Time taken to explore map: " + str(self.explorer.timeTakenToExplore) + "s")
-        # print("Proportion of map explored: " + str(self.explorer.coverage))
 
     class ExplorerThread(threading.Thread):
         def __init__(self, explorer):
