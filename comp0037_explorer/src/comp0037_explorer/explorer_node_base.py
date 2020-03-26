@@ -57,8 +57,11 @@ class ExplorerNodeBase(object):
         self.deltaOccupancyGridDrawer = None
         self.visualisationUpdateRequired = False
 
+        self.time_scale_factor=None
         self.timeTakenToExplore = float('inf')
         self.coverage = 0
+
+        self.exportDirectory ='comp0037_cw2\\export\\explorer_data.csv'
 
         # Request an initial map to get the ball rolling
         rospy.loginfo('Waiting for service request_map_update')
@@ -229,11 +232,63 @@ class ExplorerNodeBase(object):
     def exportData(self):
         # TODO : Implement exporting method
         # Need to write:
+        # - self.explorerAlgorithm
         # - self.coverage
         # - self.timeTakenToExplore
-        # - self.explorerAlgorithm
+        # - self.time_scale_factor
         # - rosparam: use_search_grid_to_validate_start_and_end
-        pass
+        column_headers = ['explorerAlgorithm','coverage','timeTakenToExplore',
+                          'time_scale_factor', 'use_search_grid_to_validate_start_and_end']
+
+        data = [self.explorerAlgorithm, self.coverage, self.timeTakenToExplore,
+                self.time_scale_factor, 
+                rospy.get_param('use_search_grid_to_validate_start_and_end', 'Not Available')]
+
+        # If directory doesn't exist create directory
+        if not os.path.exists(os.path.split(self.exportDirectory)[0]):
+            os.makedirs(os.path.split(self.exportDirectory)[0])
+
+        # If file doesn't exist create file
+        if(os.path.isfile(self.exportDirectory)):
+            isFileEmpty = (os.stat(self.exportDirectory).st_size == 0)
+        else:
+            isFileEmpty = True
+
+        rowList=[]
+        rowFound=False
+
+        if isFileEmpty:
+            with open(self.exportDirectory, 'w') as write_csvfile:
+                # Instanstiate writer
+                writer = csv.writer(write_csvfile)
+                writer.writerow(column_headers)
+                writer.writerow(data)
+        else:
+            with open(self.exportDirectory, 'r') as read_csvfile:
+                # Instantiate reader
+                reader = csv.reader(read_csvfile)
+                # Find if row already exists for that planner
+                    for row in reader:
+                        if(str(row[0])==str(self.plannerName) and str(row[1])==str(self.mapName)):
+                            rowFound=True
+                        else:
+                            rowList.append(row)
+            # If row was not found then append file.          
+            if(not rowFound):
+                with open(self.exportDirectory, 'a') as write_csvfile:
+                    writer = csv.writer(write_csvfile)
+                    writer.writerow(data)
+            # If row was found then rewrite the whole file without the old row
+            else:
+                with open(self.exportDirectory, 'w') as write_csvfile:
+                    rowList.append(data)
+                    writer = csv.writer(write_csvfile)
+                    for row in rowList:
+                        writer.writerow(row)
+
+        # print(self.time_scale_factor)
+        # print("Time taken to explore map: " + str(self.explorer.timeTakenToExplore) + "s")
+        # print("Proportion of map explored: " + str(self.explorer.coverage))
 
 
     class ExplorerThread(threading.Thread):
@@ -241,7 +296,7 @@ class ExplorerNodeBase(object):
             threading.Thread.__init__(self)
             self.explorer = explorer
             self.running = False
-            self.completed = False;
+            self.completed = False
 
         def isRunning(self):
             return self.running
@@ -277,14 +332,13 @@ class ExplorerNodeBase(object):
                     self.completed = True
                     # endTime = time.time()
                     endTime = rospy.get_time()
-                    time_scale_factor = rospy.get_param('time_scale_factor',1.5)
+                    self.time_scale_factor = rospy.get_param('time_scale_factor',1.5)
                     self.explorer.timeTakenToExplore = (endTime - startTime)
                     self.explorer.coverage = self.explorer.computeCoverage() 
 
-                    print(time_scale_factor)
+                    print(self.time_scale_factor)
                     print("Time taken to explore map: " + str(self.explorer.timeTakenToExplore) + "s")
                     print("Proportion of map explored: " + str(self.explorer.coverage))
-
                     self.explorer.exportData()
 
     def run(self):

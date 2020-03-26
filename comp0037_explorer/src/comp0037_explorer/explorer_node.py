@@ -18,7 +18,7 @@ class ExplorerNode(ExplorerNodeBase):
         gridPose = self.occupancyGrid.getCellCoordinatesFromWorldCoordinates(worldPose)
         self.frontiers = self.getFrontiers(gridPose, self.occupancyGrid)
 
-    # Implemntation of the Wavefront Detection (WFD) algorithm 
+    # Implementation of the Wavefront Detection (WFD) algorithm 
     def getFrontiers(self, pose, occupancyGrid):
         frontiers = PriorityQueue()
         cell_state = [[0 for y in range(occupancyGrid.heightInCells)] for x in range(occupancyGrid.widthInCells)]
