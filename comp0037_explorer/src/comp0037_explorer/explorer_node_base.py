@@ -242,28 +242,16 @@ class ExplorerNodeBase(object):
         return coverage
 
     def exportData(self):
-        # TODO : Implement exporting method
-        # Need to write:
-        # - self.explorerAlgorithm
-        # - self.coverage
-        # - self.timeTakenToExplore
-        # - self.time_scale_factor
-        # - rosparam: use_search_grid_to_validate_start_and_end
 
         column_headers = ['Explorer Algorithm','Coverage','Time Taken to Explore',
                           'ROS Time Scale Factor', 'Start/End Validated by Search Grid']
 
         data = [self.explorerAlgorithm, self.coverage, self.timeTakenToExplore,
-                self.time_scale_factor, 
-                rospy.get_param('use_search_grid_to_validate_start_and_end', 'Not Available')]
-
-        print("--------------------------------------------")
-        print(os.path.split(self.exportFileDir))
+                rospy.get_param('time_scale_factor',0), 
+                rospy.get_param('use_search_grid_to_validate_start_and_end', 'N/A')]
 
         # If directory doesn't exist create directory
         if not os.path.exists(os.path.split(self.exportFileDir)[0]):
-            print("--------------------------------------------")
-            print(os.path.split(self.exportFileDir))
             os.makedirs(os.path.split(self.exportFileDir)[0])
 
         # If file doesn't exist create file

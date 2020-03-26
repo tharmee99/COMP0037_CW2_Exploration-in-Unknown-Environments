@@ -102,7 +102,7 @@ class ExplorerNode(ExplorerNodeBase):
         # TODO: Currently choosing first cell in largest frontier, Replace with middle cell
 
         print(nextCellValid)
-        return nextCellValid, destination
+        return False, destination
 
     def getmiddleCell(self, frontierCells):
         
