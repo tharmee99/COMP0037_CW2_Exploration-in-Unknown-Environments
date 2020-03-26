@@ -268,11 +268,11 @@ class ExplorerNodeBase(object):
                 # Instantiate reader
                 reader = csv.reader(read_csvfile)
                 # Find if row already exists for that planner
-                    for row in reader:
-                        if(str(row[0])==str(self.plannerName) and str(row[1])==str(self.mapName)):
-                            rowFound=True
-                        else:
-                            rowList.append(row)
+                for row in reader:
+                    if(str(row[0])==str(self.plannerName) and str(row[1])==str(self.mapName)):
+                        rowFound=True
+                    else:
+                        rowList.append(row)
             # If row was not found then append file.          
             if(not rowFound):
                 with open(self.exportDirectory, 'a') as write_csvfile:
@@ -289,7 +289,6 @@ class ExplorerNodeBase(object):
         # print(self.time_scale_factor)
         # print("Time taken to explore map: " + str(self.explorer.timeTakenToExplore) + "s")
         # print("Proportion of map explored: " + str(self.explorer.coverage))
-
 
     class ExplorerThread(threading.Thread):
         def __init__(self, explorer):
