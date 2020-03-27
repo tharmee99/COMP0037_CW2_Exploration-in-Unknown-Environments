@@ -5,6 +5,7 @@ import rospy
 import math
 import tf
 import copy
+import time
 
 import numpy as np
 from nav_msgs.srv import GetMap
@@ -91,6 +92,10 @@ class MapperNode(object):
         self.mostRecentTwist = Twist()
         self.twistSubscriber = rospy.Subscriber('/robot0/cmd_vel', Twist, self.twistCallback, queue_size=1)
         self.laserSubscriber = rospy.Subscriber("robot0/laser_0", LaserScan, self.laserScanCallback, queue_size=1)
+
+        # Entropy Variables
+        self.entropyUpdatePeriod = 5
+        self.lastEntropyUpdate = 0
 
     def odometryCallback(self, msg):
         self.dataCopyLock.acquire()
@@ -335,12 +340,42 @@ class MapperNode(object):
 
         return mapUpdateMessage
 
+    def computeCellEntropy(self, cellCoords):
+        cellEntropy = None
         
+        p1 = self.occupancyGrid.getCell(cellCoords[0],cellCoords[1])
+        p2 = 1 - p1
+        
+        # print("p1:" + str(p1) + ", p2:" + str(p2))
+
+        if ((p1 == 1) or (p1 == 0)):
+            cellEntropy = 0
+        else:
+            p1Entropy = p1 * math.log(p1)
+            p2Entropy = p2 * math.log(p2)
+
+            cellEntropy = (-1)*(p1Entropy + p2Entropy)
+
+        return cellEntropy
+    
+    def computeMapEntropy(self):
+        totalEntropy = 0
+        
+        for x in range(0, self.occupancyGrid.getWidthInCells()):
+            for y in range(0, self.occupancyGrid.getHeightInCells()):
+                totalEntropy = totalEntropy + self.computeCellEntropy((x,y))
+        
+        return totalEntropy
+
     def run(self):
         while not rospy.is_shutdown():
             self.updateVisualisation()
-            rospy.sleep(0.1)
-        
-  
 
-  
+            currWallclockTime = time.time()
+            
+            if ((currWallclockTime - self.lastEntropyUpdate) >= self.entropyUpdatePeriod):
+                print(str(self.computeMapEntropy()))
+                self.lastEntropyUpdate = time.time()
+            
+            rospy.sleep(0.1)
+            
