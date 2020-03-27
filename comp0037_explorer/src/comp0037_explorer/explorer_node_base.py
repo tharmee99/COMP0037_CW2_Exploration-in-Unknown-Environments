@@ -338,7 +338,7 @@ class ExplorerNodeBase(object):
                     self.explorer.timeTakenToExplore = (endTime - startTime)
                     self.explorer.coverage = self.explorer.computeCoverage() 
 
-                    print(self.time_scale_factor)
+                    print('Time scale factor: {}'(self.time_scale_factor))
                     print("Time taken to explore map: " + str(self.explorer.timeTakenToExplore) + "s")
                     print("Proportion of map explored: " + str(self.explorer.coverage))
                     self.explorer.exportData()

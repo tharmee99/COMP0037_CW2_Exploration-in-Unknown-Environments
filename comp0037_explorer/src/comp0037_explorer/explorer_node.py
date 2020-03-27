@@ -79,14 +79,13 @@ class ExplorerNode(ExplorerNodeBase):
         destination = None
         nextCellValid = False
         loop_flg = True
-        print("----------------------------------------------------asdasd")
-        print(self.frontiers.empty())
+        print("----------------------------------------------------")
+        print('Is frontiers queue empty: {}'.format(self.frontiers.empty()))
         while (not self.frontiers.empty()) and (loop_flg):
             bestFrontier = self.frontiers.get()
-            print(len(bestFrontier[1]))
+            print('Length of bestFrontier[1]: {}'.format(len(bestFrontier[1])))
             if (len(bestFrontier[1]) == 0):
-                print("Asdasdasd")
-                print(self.frontiers.empty())
+                print('Is frontiers queue empty: {}'.format(self.frontiers.empty()))
                 continue
 
             cell = self.getmiddleCell(bestFrontier[1])
@@ -169,7 +168,7 @@ class ExplorerNode(ExplorerNodeBase):
 
     def destinationReached(self, goal, goalReached):
         if goalReached is False:
-            print("OH NOOOO" + str(goal))
+            print 'Adding ' + str(goal) + ' to the naughty step'
             self.blackList.append(goal)
             self.occupancyGrid.blacklistCell[goal[0]][goal[1]] = True
             self.visualisationUpdateRequired = True
