@@ -49,7 +49,7 @@ class ExplorerNodeBase(object):
         # Choosing what explorer to use. 
         # 0 - Original inefficient explorer
         # 1 - WFD explorer going to the middle of the largest frontier
-        self.explorerAlgorithm = 1
+        self.explorerAlgorithm = 0
 
         # Flags used to control the graphical output. Note that we
         # can't create the drawers until we receive the first map
@@ -275,7 +275,7 @@ class ExplorerNodeBase(object):
                 reader = csv.reader(read_csvfile)
                 # Find if row already exists for that planner
                 for row in reader:
-                    if(str(row[0])==str(self.plannerName) and str(row[1])==str(self.mapName)):
+                    if(str(row[0])==str(self.explorerAlgorithm) and str(row[3])==str(rospy.get_param('time_scale_factor',0)) and str(row[4])==str(rospy.get_param('use_search_grid_to_validate_start_and_end', 'N/A'))):
                         rowFound=True
                     else:
                         rowList.append(row)
