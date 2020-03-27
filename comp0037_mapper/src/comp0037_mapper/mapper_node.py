@@ -6,6 +6,8 @@ import math
 import tf
 import copy
 import time
+import os
+import datetime
 
 import numpy as np
 from nav_msgs.srv import GetMap
@@ -96,6 +98,37 @@ class MapperNode(object):
         # Entropy Variables
         self.entropyUpdatePeriod = 5
         self.lastEntropyUpdate = 0
+
+        exportDirectory = ''
+
+        if (len(sys.argv) > 1):
+            exportDirectory = sys.argv[1]
+
+        if not os.path.exists(exportDirectory):
+            os.makedirs(exportDirectory)
+
+        date = datetime.datetime.now().date()
+        
+        taskNum = rospy.get_param('task_num', 0)
+
+        explorerAlgorithm = rospy.get_param('explorer_algorithm', 0)
+        if (explorerAlgorithm == 0):
+            explorer = "baseline"
+        else:
+            explorer = "WFD"
+
+        explorerBaseFileName = str(date).replace("-","") + "_" + "task" + str(taskNum) + "_" + explorer
+        self.entropyExportFile = os.path.join(exportDirectory,(explorerBaseFileName + ".csv"))
+
+        counter = 1
+
+        while (os.path.isfile(self.entropyExportFile)):
+            self.entropyExportFile =  os.path.join(exportDirectory,(explorerBaseFileName + str(counter) + ".csv"))
+            counter += 1
+
+        with open(self.entropyExportFile, 'w') as fp: 
+            pass
+
 
     def odometryCallback(self, msg):
         self.dataCopyLock.acquire()
@@ -365,6 +398,9 @@ class MapperNode(object):
             for y in range(0, self.occupancyGrid.getHeightInCells()):
                 totalEntropy = totalEntropy + self.computeCellEntropy((x,y))
         
+        with open(self.entropyExportFile, "a") as exportFile:
+            exportFile.write(str(totalEntropy) + ',')
+
         return totalEntropy
 
     def run(self):
@@ -374,7 +410,7 @@ class MapperNode(object):
             currWallclockTime = time.time()
             
             if ((currWallclockTime - self.lastEntropyUpdate) >= self.entropyUpdatePeriod):
-                print(str(self.computeMapEntropy()))
+                print("Entropy: " + str(self.computeMapEntropy()))
                 self.lastEntropyUpdate = time.time()
             
             rospy.sleep(0.1)

@@ -49,7 +49,7 @@ class ExplorerNodeBase(object):
         # Choosing what explorer to use. 
         # 0 - Original inefficient explorer
         # 1 - WFD explorer going to the middle of the largest frontier
-        self.explorerAlgorithm = 0
+        self.explorerAlgorithm = rospy.get_param('explorer_algorithm', 0)
 
         # Flags used to control the graphical output. Note that we
         # can't create the drawers until we receive the first map
