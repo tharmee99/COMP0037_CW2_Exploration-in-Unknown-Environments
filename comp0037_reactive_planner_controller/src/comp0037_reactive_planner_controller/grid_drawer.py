@@ -92,6 +92,9 @@ class BaseDrawer(object):
             input("Press enter to continue...")
         except SyntaxError:
             pass
+    
+    def saveAsImage(self):
+        pass
 
 class SearchGridDrawer(BaseDrawer):
 
