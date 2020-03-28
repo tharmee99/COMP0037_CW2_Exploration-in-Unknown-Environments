@@ -20,14 +20,17 @@ class ExplorerNode(ExplorerNodeBase):
 
     # Implementation of the Wavefront Detection (WFD) algorithm 
     def getFrontiers(self, pose, occupancyGrid):
+        # Instantiate empty priority queue to store frontiers ordered by size
         frontiers = PriorityQueue()
-        cell_state = [[0 for y in range(occupancyGrid.heightInCells)] for x in range(occupancyGrid.widthInCells)]
 
+        # The state of each cell to be searched over. Four possible states:
         # 1 - Map Open List
         # 2 - Map Close List
         # 3 - Frontier Open List
         # 4 - Frontier Close List
+        cell_state = [[0 for y in range(occupancyGrid.heightInCells)] for x in range(occupancyGrid.widthInCells)]
 
+        # Queue to traverse over all cells in the map (outer BFS)
         map_queue = deque()
         map_queue.append(pose)
         cell_state[pose[0]][pose[1]] = 1
@@ -38,6 +41,7 @@ class ExplorerNode(ExplorerNodeBase):
             if (cell_state[p[0]][p[1]] == 2):
                 continue
             if (self.isFrontierCell(p[0],p[1],occupancyGrid)):
+                # Queue to traverse over neighbouring cells once frontier is found (inner BFS)
                 frontier_queue = deque()
                 newFrontier = []
                 frontier_queue.append(p)
@@ -74,47 +78,59 @@ class ExplorerNode(ExplorerNodeBase):
             
         return frontiers
 
+    def getGoodCells(self, frontierList):
+        goodCells = []
+
+        for cell in frontierList:
+            if cell not in self.blackList:
+                goodCells.append(cell)
+
+        return goodCells
+
     # Choosing the next destination based purely on the WFD algorithm
     def chooseNewDestination(self):
         destination = None
         nextCellValid = False
+
         loop_flg = True
-        print("----------------------------------------------------")
+
         print('Is frontiers queue empty: {}'.format(self.frontiers.empty()))
+
+        # While the frontier queue is not empty and a destination hasn't been found
         while (not self.frontiers.empty()) and (loop_flg):
+
+            # Pop the largest frontier from the priority queue
             bestFrontier = self.frontiers.get()
             print('Length of bestFrontier[1]: {}'.format(len(bestFrontier[1])))
-            if (len(bestFrontier[1]) == 0):
+
+            # Retrieve all cells in the frontier that are not blacklisted
+            goodCells = self.getGoodCells(bestFrontier[1])
+
+            # If the current frontier has no good frontiers skip to next frontier
+            if (len(goodCells) == 0):
                 print('Is frontiers queue empty: {}'.format(self.frontiers.empty()))
                 continue
 
-            cell = self.getmiddleCell(bestFrontier[1])
-            
-            if cell not in self.blackList:
-                destination = cell
-                nextCellValid = True
-                loop_flg = False
+            # set the middle cell in the frontier as the destination
+            destination = self.getmiddleCell(goodCells)
+            nextCellValid = True
 
-                bestFrontier[1].remove(cell)
-                self.frontiers.put((bestFrontier))
-                break
+            # Stop looping through frontiers
+            loop_flg = False
+
+            # Add frontier back to priority queue in case current destination is blacklisted
+            self.frontiers.put((bestFrontier))
+            break
 
         # TODO: Currently choosing first cell in largest frontier, Replace with middle cell
 
         return nextCellValid, destination
 
     def getmiddleCell(self, frontierCells):
-        
-        goodCells = []
-
-        for cell in frontierCells:
-            if cell not in self.blackList:
-                goodCells.append(cell)
-
         min_coords = [float('inf'),float('inf')]
         max_coords = [0,0]
 
-        for cell in goodCells:
+        for cell in frontierCells:
             if (cell[0] > max_coords[0]):
                 max_coords[0] = cell[0]
             
@@ -132,7 +148,7 @@ class ExplorerNode(ExplorerNodeBase):
         min_d2 = float('inf')
         candidate = None
         
-        for cell in goodCells:
+        for cell in frontierCells:
             d2 = (cell[0] - midpoint[0])**2 + (cell[1] - midpoint[1])**2
             if d2 < min_d2:
                 candidate = cell
