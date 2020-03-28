@@ -89,6 +89,7 @@ class ExplorerNode(ExplorerNodeBase):
                 continue
 
             cell = self.getmiddleCell(bestFrontier[1])
+            
             if cell not in self.blackList:
                 destination = cell
                 nextCellValid = True

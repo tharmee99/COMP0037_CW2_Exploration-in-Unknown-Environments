@@ -334,11 +334,11 @@ class ExplorerNodeBase(object):
                     self.completed = True
                     # endTime = time.time()
                     endTime = rospy.get_time()
-                    self.time_scale_factor = rospy.get_param('time_scale_factor',1.5)
+                    ros_time_scale_factor = rospy.get_param('time_scale_factor',1.5)
                     self.explorer.timeTakenToExplore = (endTime - startTime)
                     self.explorer.coverage = self.explorer.computeCoverage() 
 
-                    print('Time scale factor: {}'(self.time_scale_factor))
+                    print('Time scale factor: ' + str(ros_time_scale_factor))
                     print("Time taken to explore map: " + str(self.explorer.timeTakenToExplore) + "s")
                     print("Proportion of map explored: " + str(self.explorer.coverage))
                     self.explorer.exportData()
