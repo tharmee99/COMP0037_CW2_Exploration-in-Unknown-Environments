@@ -334,7 +334,7 @@ class ExplorerNodeBase(object):
                     self.completed = True
                     # endTime = time.time()
                     endTime = rospy.get_time()
-                    self.time_scale_factor = rospy.get_param('time_scale_factor',1.5)
+                    ros_time_scale_factor = rospy.get_param('time_scale_factor',1.5)
                     self.explorer.timeTakenToExplore = (endTime - startTime)
                     self.explorer.coverage = self.explorer.computeCoverage() 
 
