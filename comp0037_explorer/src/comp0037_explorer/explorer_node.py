@@ -83,6 +83,7 @@ class ExplorerNode(ExplorerNodeBase):
         print('Is frontiers queue empty: {}'.format(self.frontiers.empty()))
         while (not self.frontiers.empty()) and (loop_flg):
             bestFrontier = self.frontiers.get()
+            print(bestFrontier)
             print('Length of bestFrontier[1]: {}'.format(len(bestFrontier[1])))
             if (len(bestFrontier[1]) == 0):
                 print('Is frontiers queue empty: {}'.format(self.frontiers.empty()))
@@ -93,7 +94,8 @@ class ExplorerNode(ExplorerNodeBase):
                 destination = cell
                 nextCellValid = True
                 loop_flg = False
-
+                print(bestFrontier)
+                print(cell)
                 bestFrontier[1].remove(cell)
                 self.frontiers.put((bestFrontier))
                 break
