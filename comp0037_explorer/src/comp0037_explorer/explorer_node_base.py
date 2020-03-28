@@ -47,7 +47,7 @@ class ExplorerNodeBase(object):
         self.frontiers = PriorityQueue()
 
         # Choosing what explorer to use. 
-        # 0 - Original inefficient explorer
+        # 0 - Original Baseline explorer
         # 1 - WFD explorer going to the middle of the largest frontier
         self.explorerAlgorithm = rospy.get_param('explorer_algorithm', 0)
 
@@ -338,7 +338,7 @@ class ExplorerNodeBase(object):
                     self.explorer.timeTakenToExplore = (endTime - startTime)
                     self.explorer.coverage = self.explorer.computeCoverage() 
 
-                    print('Time scale factor: ' + str(ros_time_scale_factor))
+                    print('Time scale factor: {}'.format(self.time_scale_factor))
                     print("Time taken to explore map: " + str(self.explorer.timeTakenToExplore) + "s")
                     print("Proportion of map explored: " + str(self.explorer.coverage))
                     self.explorer.exportData()
