@@ -107,7 +107,35 @@
 	
 	%%%%%%%%%%% PART 2 %%%%%%%%%%%%%%%%%
 	\section{Frontier-Based Exploration System}
-	
+	\subsection{Frontier Exploration}
+
+			A frontier is a boundary where the knwon world ends and the unknown world beguins.
+			In the exploaration the algoritm plans the route to account for the obstacles in the known world
+			and assumes that all of the unknown world is empty. Thus it plans the rought based on this.
+			The robot then starts to travel along this path, and constantly exploring the seroundings, expanding the frontier.
+			Once it detects that the current panth can't be compleated due to an obstacle in the way, it will rerun the
+			planning algorithm with the newly updated frontier. This continues until the robot reaches it's destination.
+			This path may not be the optimal as it does hevely depend on the movements of the robot to descover the new frontiers.
+			\subsection{Frontier Detection}
+			There are two main ways of detecting frontiers that we will be using in this cource work. They are Wave Front Detection and 
+			Fast Fronier Detection.
+			\\
+			\\
+			In Wave Front Detection the algorithm uses already explored map to then use deapth first search from the 
+			reobots initial position to find cells that identify as frontier cells. These cells are free, and they have other cells
+			arround them that it doesn't know the state of. If such a sell is found it is marked as a frontier cell. It then suspends the deapth
+			first search, and looks at the neighbours of the found frontier cell. If they also qualify to be frontier cells 
+			they are marked so, and the process of expanding the frontier continues. Once the algorithm has found the final 
+			frontier cell in this chain it returns to the original deapth first search, and compleates it to look for further frontiers.
+			This algorithm looks at a whole map a once.
+			\\
+			\\
+			The Fast Fronier Detection works on the basis that the robot constantly updates the data collected from the sensors.
+			This data is then used to create a contour, which are then classified into frontier and non-frontier segments. Once these
+			are identified they are stored in the database. These will also get updated once data gets changed or updated.
+
+
+
 	
 	%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 	
@@ -124,7 +152,9 @@
 	%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 	
 	\newpage
-	
+	\bibliographystyle{IEEEtran}
+	\bibliography{references}
+	\newpage
 	\appendix
 	\appendixpage
 	\addappheadtotoc
