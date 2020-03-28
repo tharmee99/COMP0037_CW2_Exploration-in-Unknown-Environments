@@ -37,10 +37,8 @@ class ReactivePlannerController(PlannerControllerBase):
             if self.occupancyGrid.getCell(coords[0],coords[1]) > self.threshold:
                 self.controller.stopDrivingToCurrentGoal()
                 break
-        pass
 
     def driveToGoal(self, goal):
-
         # Get the goal coordinate in cells
         goalCellCoords = self.occupancyGrid.getCellCoordinatesFromWorldCoordinates((goal.x,goal.y))
 
@@ -81,6 +79,4 @@ class ReactivePlannerController(PlannerControllerBase):
 
             rospy.logerr('goalReached=%d', goalReached)
 
-        return goalReached
-            
-            
+        return goalReached   
