@@ -102,10 +102,7 @@ class BaseDrawer(object):
         if not os.path.exists(baseDir):
             os.makedirs(baseDir)
             
-        self.window.postscript(file="image.eps", colormode='color')
-        img = NewImage.open("image.eps")
-        os.remove("image.eps")
-        img.save(exportFileDir, "png")
+        self.window.postscript(file=exportFileDir, colormode='color')
         
 
 class SearchGridDrawer(BaseDrawer):
@@ -187,6 +184,7 @@ class OccupancyGridDrawer(BaseDrawer):
         BaseDrawer.__init__(self, title, occupancyGrid.getExtentInCells(), 
                             maximumWindowHeightInPixels)
         self.occupancyGrid = occupancyGrid;
+        self.visualizeCellStates = rospy.get_param('visualize_cell_states', True)
 
     def drawGrid(self):
 
@@ -196,10 +194,10 @@ class OccupancyGridDrawer(BaseDrawer):
             if rospy.is_shutdown():
                 return
             for j in range(cellExtent[1]):
-                if self.occupancyGrid.blacklistCell[i][j]:
+                if (self.visualizeCellStates) and (self.occupancyGrid.blacklistCell[i][j]):
                     colour = '#' + "FF0000"
                     self.rectangles[i][j].setFill(colour);
-                elif self.occupancyGrid.frontierCell[i][j]:
+                elif (self.visualizeCellStates) and (self.occupancyGrid.frontierCell[i][j]):
                     colour = '#' + "FFFF00"
                     self.rectangles[i][j].setFill(colour);
                 else:

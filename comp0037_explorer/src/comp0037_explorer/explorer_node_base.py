@@ -60,7 +60,7 @@ class ExplorerNodeBase(object):
         self.deltaOccupancyGridDrawer = None
         self.visualisationUpdateRequired = False
 
-        self.time_scale_factor=None
+        self.time_scale_factor = rospy.get_param('time_scale_factor',0)
         self.timeTakenToExplore = float('inf')
         self.coverage = 0
 
@@ -80,7 +80,7 @@ class ExplorerNodeBase(object):
 
         if (taskNum != 0) and (exportDirectory != ''):
             self.exportFileDir = os.path.join(exportDirectory,("results_task" + str(taskNum) + ".csv"))
-            self.mapExportFile = os.path.join(exportDirectory,("finalMap_task" + str(taskNum) + "_" + explorer + ".png"))
+            self.mapExportFile = os.path.join(exportDirectory,("finalMap_task" + str(taskNum) + "_" + explorer + "_TSF" + str(self.time_scale_factor) + ".eps"))
 
         # Request an initial map to get the ball rolling
         rospy.loginfo('Waiting for service request_map_update')

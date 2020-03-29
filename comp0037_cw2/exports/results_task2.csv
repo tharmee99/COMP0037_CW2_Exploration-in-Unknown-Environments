@@ -1,2 +1,3 @@
 Explorer Algorithm,Coverage,Time Taken to Explore,ROS Time Scale Factor,Start/End Validated by Search Grid
-1,0.7813333333333333,1348.248714208603,2,True
+0,0.7825333333333333,1422.0486438274384,2,True
+1,0.7821333333333333,1264.9487936496735,2,True

@@ -136,9 +136,7 @@ class GeneralForwardSearchAlgorithm(PlannerBase):
 
         if (self.useSearchGridToValidateStartAndEnd is True) & \
             (self.start.label is CellLabel.OBSTRUCTED):
-            print("Start is bad")
-            # Disabled to prevent early termination of mapping node
-            # return False
+            return False
         
         self.start.label = CellLabel.START
         self.start.pathCost = 0

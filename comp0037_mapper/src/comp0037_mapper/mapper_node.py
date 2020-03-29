@@ -99,6 +99,8 @@ class MapperNode(object):
         self.entropyUpdatePeriod = 5
         self.lastEntropyUpdate = 0
 
+        self.time_scale_factor = rospy.get_param('time_scale_factor',0)
+
         exportDirectory = ''
 
         if (len(sys.argv) > 1):
@@ -115,7 +117,7 @@ class MapperNode(object):
         else:
             explorer = "baseline"
 
-        self.entropyExportFile = os.path.join(exportDirectory,("entropy_task" + str(taskNum) + "_" + explorer + ".csv"))
+        self.entropyExportFile = os.path.join(exportDirectory,("entropy_task" + str(taskNum) + "_" + explorer + "_TSF" + str(self.time_scale_factor) + ".csv"))
 
         open(self.entropyExportFile, 'w').close()
 
@@ -397,11 +399,11 @@ class MapperNode(object):
         while not rospy.is_shutdown():
             self.updateVisualisation()
 
-            currWallclockTime = time.time()
+            currSimulationTime = rospy.get_time()
             
-            if ((currWallclockTime - self.lastEntropyUpdate) >= self.entropyUpdatePeriod):
+            if ((currSimulationTime - self.lastEntropyUpdate) >= self.entropyUpdatePeriod):
                 print("Entropy: " + str(self.computeMapEntropy()))
-                self.lastEntropyUpdate = time.time()
+                self.lastEntropyUpdate = rospy.get_time()
             
             rospy.sleep(0.1)
             
