@@ -133,7 +133,21 @@
 			The Fast Fronier Detection works on the basis that the robot constantly updates the data collected from the sensors.
 			This data is then used to create a contour, which are then classified into frontier and non-frontier segments. Once these
 			are identified they are stored in the database. These will also get updated once data gets changed or updated.
-
+			\subsection{Waypoint Selection}
+			Once the frontiers are identified the robot needs to decide on where to move next to, as it needs to explore the map.
+			For this there are two main methods, heuristic based aproach and information based aproach. Useing these the robot will be able 
+			to pick the next waypoint to move to.
+			\subsubsection{Heuristic Approaches}
+			There are two main heuristics that are used for waypoint selection the closeset frontier heuristic and largest frontier heuristic.
+			For the closest frontier waypoint the robot looks at the frontiers that it has found, and identifies the closest one to the robot.
+			The robot then assigns it as a waypoint and reroutes the path to it. This has a big advantage of having the shortest path to each waypoint
+			from the robots position, thus saving on travel distance and travel time. For the seccond heuristic, the largest frontier heuristic, the 
+			algorithm will look for the largest frontier avalible. This could potentialy signify a much larger are to explore for the robot thus also saving
+			on exploration time.
+			\subsubsection{Information Based Approach}
+			This method relies on calculation the unsertainty in the map and deciding what the best action would be to reduce thw said unsertainty.
+			To calculate the unsertainty we will use entropy of the grid. Entropy, in this case, is a measure that tells the unsertainty that the particular grid has empty 
+			or ocupied spaces. The entropy is calculated based on the already explored map, thus extrapolating information about the remaider of the map.
 
 
 	
