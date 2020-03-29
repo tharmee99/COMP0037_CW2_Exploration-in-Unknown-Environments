@@ -6,7 +6,7 @@
     <param name="remove_goal_cell_from_path_if_occupied" type="bool" value="false" />
 
     <rosparam param="clock_send_rate">40</rosparam>
-    <rosparam param="time_scale_factor">1</rosparam>
+    <rosparam param="time_scale_factor">2</rosparam>
     <rosparam param="task_num">3</rosparam>
     <rosparam param="explorer_algorithm">1</rosparam>
 

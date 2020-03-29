@@ -71,9 +71,16 @@ class ExplorerNodeBase(object):
             exportDirectory = sys.argv[1]
 
         self.exportFileDir = ''
+        self.mapExportFile = ''
+
+        if (self.explorerAlgorithm == 1):
+            explorer = "WFD"
+        else:
+            explorer = "baseline"
 
         if (taskNum != 0) and (exportDirectory != ''):
-            self.exportFileDir = os.path.join(exportDirectory,("task" + str(taskNum) + ".csv"))
+            self.exportFileDir = os.path.join(exportDirectory,("results_task" + str(taskNum) + ".csv"))
+            self.mapExportFile = os.path.join(exportDirectory,("finalMap_task" + str(taskNum) + "_" + explorer + ".png"))
 
         # Request an initial map to get the ball rolling
         rospy.loginfo('Waiting for service request_map_update')
@@ -309,7 +316,6 @@ class ExplorerNodeBase(object):
         def run(self):
 
             self.running = True
-            # startTime = time.time()
             startTime = rospy.get_time()
 
             while (rospy.is_shutdown() is False) & (self.completed is False):
@@ -332,15 +338,15 @@ class ExplorerNodeBase(object):
                     self.explorer.destinationReached(newDestination, attempt)
                 else:
                     self.completed = True
-                    # endTime = time.time()
                     endTime = rospy.get_time()
                     ros_time_scale_factor = rospy.get_param('time_scale_factor',1.5)
                     self.explorer.timeTakenToExplore = (endTime - startTime)
                     self.explorer.coverage = self.explorer.computeCoverage() 
 
-                    print('Time scale factor: {}'.format(self.time_scale_factor))
+                    print("Time scale factor: " + str(ros_time_scale_factor))
                     print("Time taken to explore map: " + str(self.explorer.timeTakenToExplore) + "s")
                     print("Proportion of map explored: " + str(self.explorer.coverage))
+
                     self.explorer.exportData()
 
     def run(self):
@@ -360,7 +366,9 @@ class ExplorerNodeBase(object):
 
             if explorerThread.isRunning() is False:
                 explorerThread.start()
+                
 
             if explorerThread.hasCompleted() is True:
+                self.occupancyGridDrawer.saveAsImage(self.mapExportFile)
                 explorerThread.join()
                 keepRunning = False

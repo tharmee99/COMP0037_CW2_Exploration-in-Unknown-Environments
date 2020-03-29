@@ -106,28 +106,18 @@ class MapperNode(object):
 
         if not os.path.exists(exportDirectory):
             os.makedirs(exportDirectory)
-
-        date = datetime.datetime.now().date()
         
         taskNum = rospy.get_param('task_num', 0)
 
         explorerAlgorithm = rospy.get_param('explorer_algorithm', 0)
-        if (explorerAlgorithm == 0):
-            explorer = "baseline"
-        else:
+        if (explorerAlgorithm == 1):
             explorer = "WFD"
+        else:
+            explorer = "baseline"
 
-        explorerBaseFileName = str(date).replace("-","") + "_" + "task" + str(taskNum) + "_" + explorer
-        self.entropyExportFile = os.path.join(exportDirectory,(explorerBaseFileName + ".csv"))
+        self.entropyExportFile = os.path.join(exportDirectory,("entropy_task" + str(taskNum) + "_" + explorer + ".csv"))
 
-        counter = 1
-
-        while (os.path.isfile(self.entropyExportFile)):
-            self.entropyExportFile =  os.path.join(exportDirectory,(explorerBaseFileName + str(counter) + ".csv"))
-            counter += 1
-
-        with open(self.entropyExportFile, 'w') as fp: 
-            pass
+        open(self.entropyExportFile, 'w').close()
 
 
     def odometryCallback(self, msg):
