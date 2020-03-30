@@ -14,6 +14,9 @@
 
 %***************************************DOCUMENT***************************************
 
+
+\setlength{\parindent}{0em}
+
 \begin{document}
 	\fontfamily{ptm}\selectfont
 	%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%COVERSHEET%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -217,19 +220,74 @@
 			The information-Theoretic approach to path planning utilizes the concept of entropy. Entropy represents the uncertainty in the map. For a single cell the entropy would be given by the equation shown in Eq. \ref{eq:singleCellEntropy1}. In this equation $\textbf{c}$ represents a cell and $c$ represents the possible states of the cell. Therefore entropy is a sum over all of the possible states of the cell.
 
 			\begin{equation}
-				H \left(\textbf{c}\right) = - \sum_{c} p\left(\textbf{c}=c\right)ln \; p\left(\textbf{c}=c\right)
+				H \left(\textbf{c}\right) = - \sum_{c} p\left(\textbf{c}=c\right)\text{ln} \; p\left(\textbf{c}=c\right)
 				\label{eq:singleCellEntropy1}
 			\end{equation}
 			
 			In our example, cells are either known to be occupied/free or unknown. Additionally, the state of a cell can either be occupied or free. Therefore the above mentioned sum has only two terms. Furthermore given that the probability of a cell being occupied and the probability of a cell being free sum to 1, the sum depends on only one probability. This simplified version of the entropy of a cell can be found in Eq. \ref{eq:singleCellEntropy}. In this equation the probability $p\left(\textbf{c}\right)$ represents the probability of the cell being occupied. The occupancy grid for our simplified case consisting of cells with probabilities equal to 0, 0.5 or 1 can be shown to have cells of entropy as follows:
 
 			\begin{align}
-				\nonumber p\left(\textbf{c}\right) = 0 \; &: \; H \left(\textbf{c}\right) = -(1)ln(1)-0ln(0) = 0 \\
-				\nonumber p\left(\textbf{c}\right) = 0.5 \; &: \; H \left(\textbf{c}\right) = -(0.5)ln(0.5)-0.5ln(0.5) = ln2 \\
-				\nonumber p\left(\textbf{c}\right) = 1 \; &: \; H \left(\textbf{c}\right) = -(0)ln(0)-1ln(1) = 0 \\
+				\nonumber p\left(\textbf{c}\right) = 0 \; &: \; H \left(\textbf{c}\right) = -(1)\text{ln}(1)-\text{ln}(0) = 0 \\
+				\nonumber p\left(\textbf{c}\right) = 0.5 \; &: \; H \left(\textbf{c}\right) = -(0.5)\text{ln}(0.5)-0.5\text{ln}(0.5) = \text{ln}2 \\
+				\nonumber p\left(\textbf{c}\right) = 1 \; &: \; H \left(\textbf{c}\right) = -(0)\text{ln}(0)-1\text{ln}(1) = 0 \\
 			\end{align}
 
+			To compute the entropy of the whole map the expression in Eq. \ref{eq:mapEntropy1} needs to be evaluated. in this equation, $\textbf{M}$ represents possible map realizations (i.e. specific assignments of occupied/free to cells). The entropy is the sum over all possible map realizations.
 
+			\begin{equation}
+				H \left(\textbf{C}\right) = - \sum_{\textbf{M}} p\left(\textbf{M}\right) \text{ln} \; p\left(\textbf{M}\right)
+				\label{eq:mapEntropy1}
+			\end{equation}
+			
+			To compute $p(\textbf{M})$ we introduce the notation $p_\textbf{C}(\textbf{M})$ which signifies the probability that an occupancy grid $\textbf{C}$ can take a specific map realization $\textbf{M}$. Assuming independence between cells this can be expressed as shown in Eq. \ref{eq:mapProbability1}.
+			
+			\begin{equation}
+				p_\textbf{C}(\textbf{M}) = \prod_{i} \prod_{j} p(c_{ij} = m_{ij})
+				\label{eq:mapProbability1}
+			\end{equation}
+			
+			This product can be broken down into two groups of cells: the group of known cells and the group of unknown cells. As this is mutually exclusive, there is no intersection between the two sets. We can therefore rewrite Eq. \ref{eq:mapProbability1} as a product of the known and unknown probabilities. The probability of the known portion can easily be computed, If the map realization $\textbf{M}_K$ is equal to the current known map realization $\textbf{M}_K^{known}$ then the probability is 1 otherwise the probability is 0. This can be described by a delta function which we shall label $\delta_{\textbf{C}_K}(\textbf{M}_K)$. Using these the following equations are formulated:
+
+			\begin{equation}
+				\begin{split}
+					p_\textbf{C}(\textbf{M}) &= p_{\textbf{C}_K}(\textbf{M}_K) \cdot p_{\textbf{C}_U}(\textbf{M}_U) \\
+					p_\textbf{C}(\textbf{M}) &= \delta_{\textbf{C}_K}(\textbf{M}_K) \cdot p_{\textbf{C}_U}(\textbf{M}_U) 
+				\end{split}
+				\label{eq:mapProbability2}
+			\end{equation}
+
+			By exploiting the nature of the delta function the the map probability can be written as the following piecewise function:
+
+			\[
+				p_\textbf{C}(\textbf{M}) =
+				\begin{cases}
+					0 										& \text{if $\textbf{M}_K \neq \textbf{M}_K^{known}$} \\
+					p_{\textbf{C}_U}(\textbf{M}_U) 			& \text{if $\textbf{M}_K = \textbf{M}_K^{known}$} 
+				\end{cases}
+			\]
+			
+			This piecewise function can be simplified further by considering the simple case studied in this coursework. In this example, cells are limited to 2 different states and if unknown they have the same probability of being occupied or free. Therefore the probability $p_{\textbf{C}_U}(\textbf{M}_U)$ can be rewritten as shown in Eq. \ref{eq:mapProbability3}. In this equation, $\mid \textbf{C}_U \mid$ represents the number of unknown cells. 
+
+			\begin{equation}
+				\begin{split}
+					p_{\textbf{C}_U}(\textbf{M}_U) &= \prod_{i} p(c_{U,i} = m_{U,i}) \\
+					&= \left(0.5\right)^{\mid \textbf{C}_U \mid}
+				\end{split}
+				\label{eq:mapProbability3}
+			\end{equation}
+
+			Now to compute the entropy of the map we consider Eq. \ref{eq:mapEntropy1}. Any map realizations where the known portion of the map doesn't match what is already know, will result in a probability of 0 and a 0 sum term. Therefore these map realizations can be ignored. The only map realizations that we need to consider are those where the known portion matches what is already known about the world. Given 2 possible states and $\mid \textbf{C}_U \mid$ unknown cells, there are $2^{\mid \textbf{C}_U \mid}$ different realizations of the unknown portion of the map. Additionally, due to the fact that in this simple case, the unknown cells have equal probability of being occupied and free, the probability of each of these realizations is equal.This results in Eq. \ref{eq:mapEntropy1} reducing to the form shown in Eq. \ref{eq:mapEntropy2}.
+
+			\begin{equation}
+				\begin{split}
+					H \left(\textbf{C}\right) &= - \sum_{\textbf{M}} p\left(\textbf{M}\right)\text{ln} \; p\left(\textbf{M}\right) \\
+					&= - 2^{\mid \textbf{C}_U \mid} \cdot \left(0.5\right)^{\mid \textbf{C}_U \mid} \text{ln} \left(0.5\right)^{\mid \textbf{C}_U \mid} \\
+					&= - 2^{\mid \textbf{C}_U \mid} \cdot \left(2\right)^{-\mid \textbf{C}_U \mid} \text{ln} \left(0.5\right)^{\mid \textbf{C}_U \mid} \\
+					&= - \mid \textbf{C}_U \mid \text{ln} \left(0.5\right) \\
+					&= \mid \textbf{C}_U \mid \text{ln} \left(2\right)
+				\end{split}
+				\label{eq:mapEntropy2}
+			\end{equation}
 
 		\subsection{Evolution of Entropy over Time}
 
