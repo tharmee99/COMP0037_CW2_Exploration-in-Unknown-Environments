@@ -16,6 +16,8 @@
 
 %***************************************DOCUMENT***************************************
 
+\DeclareMathOperator*{\argmin}{\arg\!\min}
+\DeclareMathOperator*{\argmax}{\arg\!\max}
 
 \setlength{\parindent}{0em}
 
@@ -260,7 +262,7 @@
 				\label{eq:mapProbability2}
 			\end{equation}
 
-			By exploiting the nature of the delta function the the map probability can be written as the following piecewise function:
+			By exploiting the nature of the delta function the map probability can be written as the following piecewise function:
 
 			\[
 				p_\textbf{C}(\textbf{M}) =
@@ -293,17 +295,37 @@
 				\label{eq:mapEntropy2}
 			\end{equation}
 
-			It can be seen from this that the entropy in out case is directly proportional to the number of unknown cells.
+			It can be seen from this that the entropy in out case is directly proportional to the number of unknown cells. Now that we have a way of computing the current entropy of the map, we can utilize this in conjunction with another quantity to decide where the robot should travel to next. For this we introduce the mutual entropy. The mutual entropy is a measure of how much information is gained and it is this quantity that is to be maximized when choosing the next waypoint. To describe the mutual entropy, let us first assume that the robot travels to a point $\textbf{x}$ and observes the cells $\textbf{z}$. The new entropy of the map can be written as $H\left(\textbf{C}\mid\textbf{x},\textbf{z}\right)$. As we don't know the actual map, the observation $\textbf{z}$ that the robot makes is unknown to us. Therefore, we utilize the probability distribution of the unknown cells to produce an expected realization of the cells that are covered by the robot's lasers. This can be computed by producing a probability weighted sum of the Map Entropy over all the possible map realizations(as shown in Eq. \ref{eq:expectedMapEntropy}). This will be used to estimate the entropy of the map once the robot has travelled to the point $\textbf{x}$. 
+
+			\begin{equation}
+				H(\textbf{C}\mid\textbf{x}) = \sum_{\textbf{C}} p_{\textbf{C}_k}(\textbf{M})H(\textbf{C}\mid\textbf{x},\textbf{z}(\textbf{M}))
+				\label{eq:expectedMapEntropy}
+			\end{equation}
+
+			The mutual entropy is the information gained by travelling to a point $\textbf{x}$ and is given by the expression in Eq. \ref{eq:mutualEntropy}
+
+			\begin{equation}
+				I(\textbf{x}) = H \left(\textbf{C}\right) - H(\textbf{C}\mid\textbf{x})
+				\label{eq:mutualEntropy}
+			\end{equation}
+
+			The optimal cell to travel to $\textbf{x}^{*}$ is then given by the following maximization problem:
+
+			\begin{equation}
+				\textbf{x}^{*} = \argmax_{\textbf{x}}I(\textbf{x})
+				\label{eq:optimalCell}
+			\end{equation}
 
 		\subsection{Evolution of Entropy over Time}
 
 			\begin{figure}[H]
 				\centering
 				\includegraphics[scale=0.5]{images/EntropyChange.png}
-				\caption{asd}
+				\caption{The evolution of entropy over time for two different exploration algorithms.}
 				\label{EntropyChange}
 			\end{figure}
 
+			Using the equation for the entropy from Eq. \ref{eq:mapEntropy2}, the entropy 
 	%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 	
 	\newpage
