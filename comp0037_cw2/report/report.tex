@@ -325,7 +325,10 @@
 				\label{EntropyChange}
 			\end{figure}
 
-			Using the equation for the entropy from Eq. \ref{eq:mapEntropy2}, the entropy 
+			Using the equation for the entropy from Eq. \ref{eq:mapEntropy2}, the entropy of the map was computed at 5 second intervals. This was done for bot the baselines algorithm and our own implementation of the WFD algorithm. The results of this are shown in Fig. \ref{EntropyChange}. There are some distinct features in this plot. We can observe that both plots decrease as time evolves. This makes sense as when the explorer gains more knowledge about the environment, the uncertainty in the map decreases resulting in a lower entropy. In addition to this, a step like behaviour can be observed. This can be explained by the fact that the robot will not always be gaining new information. For example if a robot travels through a known region to get to a frontier, no new information will be gained for the time it travels through the known region. This results in no change in the map entropy. 
+			\\
+			\\
+			We can also see that both explorers reach a similar final entropy. This is backed up by Fig. \ref{Part3} where both explorers have a similar final coverage. Due to the fact that entropy is proportional to the number of unknown cells, a similar coverage will result in a similar final map entropy. A notable difference between the two traces is that despite reaching the same final entropy value, our WFD implementation reached this value much quicker that the baseline algorithm. In addition to this, the gradient of the entropy plot is higher for our WFD implementation than the baseline algorithm. This suggests that our WFD implementation is able to gain information about the environment quicker than the baseline algorithm is. Therefore we are able to conclude with confidence that our WFD implementation is better than the baseline explorer algorithm. 
 	%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 	
 	\newpage
