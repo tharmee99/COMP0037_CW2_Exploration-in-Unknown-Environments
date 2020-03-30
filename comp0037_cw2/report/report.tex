@@ -212,8 +212,19 @@
 	
 	%%%%%%%%%%% PART 4 %%%%%%%%%%%%%%%%%
 	\section{Information-Theoretic Path Planning}
-	
-	
+		
+		\subsection{Description of Entropy and Mutual Entropy}
+			The information-Theoretic approach to path planning utilizes the concept of entropy. Entropy represents the uncertainty in the map. For a single cell the entropy would be given by the equation shown in Eq. \ref{eq:singleCellEntropy1}. In this equation $\textbf{c}$ represents a cell and $c$ represents the possible states of the cell. Therefore entropy is a sum over all of the possible states of the cell.
+
+			\begin{equation}
+				H \left(\textbf{c}\right) = - \sum_{c} p\left(\textbf{c}=c\right)ln \; p\left(\textbf{c}=c\right)
+				\label{eq:singleCellEntropy1}
+			\end{equation}
+			
+			In our example, cells are either known to be occupied/free or unknown. Additionally, the state of a cell can either be occupied or free. Therefore the above mentioned sum has only two terms. Furthermore given that the probability of a cell being occupied and the probability of a cell being free sum to 1, the sum depends on only one probability. This simplified version of the entropy of a cell can be found in Eq. \ref{eq:singleCellEntropy}. 
+
+		\subsection{Evolution of Entropy over Time}
+
 	%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 	
 	\newpage
