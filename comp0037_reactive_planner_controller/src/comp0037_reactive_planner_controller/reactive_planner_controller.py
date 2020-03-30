@@ -3,8 +3,9 @@
 
 import rospy
 import threading
-from cell import CellLabel
+from cell import *
 from planner_controller_base import PlannerControllerBase
+from comp0037_reactive_planner_controller.search_grid import SearchGrid
 from comp0037_mapper.msg import *
 
 class ReactivePlannerController(PlannerControllerBase):
@@ -12,9 +13,10 @@ class ReactivePlannerController(PlannerControllerBase):
     def __init__(self, occupancyGrid, planner, controller):
         PlannerControllerBase.__init__(self, occupancyGrid, planner, controller)
 
+        self.robotRadius = rospy.get_param('robot_radius', 0.2)
+
         self.mapUpdateSubscriber = rospy.Subscriber('updated_map', MapUpdate, self.mapUpdateCallback)
         self.gridUpdateLock =  threading.Condition()
-        self.threshold = 0.8
 
     def mapUpdateCallback(self, mapUpdateMessage):
 
@@ -31,16 +33,17 @@ class ReactivePlannerController(PlannerControllerBase):
         self.checkIfPathCurrentPathIsStillGood()
 
     def checkIfPathCurrentPathIsStillGood(self):
+
+        tempSearchGrid = SearchGrid.fromOccupancyGrid(self.occupancyGrid, self.robotRadius)
+
         for waypointNumber in range(0,len(self.currentPlannedPath.waypoints)):
             coords = self.currentPlannedPath.waypoints[waypointNumber].coords
 
-            if self.occupancyGrid.getCell(coords[0],coords[1]) > self.threshold:
+            if (tempSearchGrid.getCellFromCoords(coords).label == CellLabel.OBSTRUCTED):
                 self.controller.stopDrivingToCurrentGoal()
                 break
-        pass
 
     def driveToGoal(self, goal):
-
         # Get the goal coordinate in cells
         goalCellCoords = self.occupancyGrid.getCellCoordinatesFromWorldCoordinates((goal.x,goal.y))
 
@@ -81,6 +84,4 @@ class ReactivePlannerController(PlannerControllerBase):
 
             rospy.logerr('goalReached=%d', goalReached)
 
-        return goalReached
-            
-            
+        return goalReached   

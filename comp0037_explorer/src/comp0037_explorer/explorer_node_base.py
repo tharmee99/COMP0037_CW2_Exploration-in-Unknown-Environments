@@ -1,13 +1,21 @@
 import rospy
 import threading
 import math
+import time
+import csv
+import os
+import sys
 
+from math import pow,atan2,sqrt,pi
 from comp0037_mapper.msg import *
 from comp0037_mapper.srv import *
 from comp0037_reactive_planner_controller.srv import *
 from comp0037_reactive_planner_controller.occupancy_grid import OccupancyGrid
 from comp0037_reactive_planner_controller.grid_drawer import OccupancyGridDrawer
 from geometry_msgs.msg  import Twist
+from geometry_msgs.msg  import Pose2D
+from nav_msgs.msg import Odometry
+from Queue import PriorityQueue
 
 class ExplorerNodeBase(object):
 
@@ -28,9 +36,20 @@ class ExplorerNodeBase(object):
         self.mapUpdateSubscriber = rospy.Subscriber('updated_map', MapUpdate, self.mapUpdateCallback)
         self.noMapReceived = True
 
+        self.currentOdometrySubscriber = rospy.Subscriber('/robot0/odom', Odometry, self.odometryCallback)
+
+        self.pose = Pose2D()
+
         # Clear the map variables
         self.occupancyGrid = None
         self.deltaOccupancyGrid = None
+
+        self.frontiers = PriorityQueue()
+
+        # Choosing what explorer to use. 
+        # 0 - Original Baseline explorer
+        # 1 - WFD explorer going to the middle of the largest frontier
+        self.explorerAlgorithm = rospy.get_param('explorer_algorithm', 0)
 
         # Flags used to control the graphical output. Note that we
         # can't create the drawers until we receive the first map
@@ -40,6 +59,28 @@ class ExplorerNodeBase(object):
         self.occupancyGridDrawer = None
         self.deltaOccupancyGridDrawer = None
         self.visualisationUpdateRequired = False
+
+        self.time_scale_factor = rospy.get_param('time_scale_factor',0)
+        self.timeTakenToExplore = float('inf')
+        self.coverage = 0
+
+        taskNum = rospy.get_param('task_num', 0)
+        exportDirectory = ''
+        
+        if (len(sys.argv) > 1):
+            exportDirectory = sys.argv[1]
+
+        self.exportFileDir = ''
+        self.mapExportFile = ''
+
+        if (self.explorerAlgorithm == 1):
+            explorer = "WFD"
+        else:
+            explorer = "baseline"
+
+        if (taskNum != 0) and (exportDirectory != ''):
+            self.exportFileDir = os.path.join(exportDirectory,("results_task" + str(taskNum) + ".csv"))
+            self.mapExportFile = os.path.join(exportDirectory,("finalMap_task" + str(taskNum) + "_" + explorer + "_TSF" + str(self.time_scale_factor) + ".eps"))
 
         # Request an initial map to get the ball rolling
         rospy.loginfo('Waiting for service request_map_update')
@@ -51,8 +92,25 @@ class ExplorerNodeBase(object):
             self.kickstartSimulator()
             mapUpdate = mapRequestService(True)
             
-        self.mapUpdateCallback(mapUpdate.initialMapUpdate)
+        self.mapUpdateCallback(mapUpdate.initialMapUpdate)    
+    
+    def odometryCallback(self, odometry):
+        odometryPose = odometry.pose.pose
+
+        pose = Pose2D()
+
+        position = odometryPose.position
+        orientation = odometryPose.orientation
         
+        pose.x = position.x
+        pose.y = position.y
+        pose.theta = 2 * atan2(orientation.z, orientation.w)
+        self.pose = pose
+
+    def getCurrentPosition(self):
+        currentCoords = (self.pose.x,self.pose.y)
+        return currentCoords
+
     def mapUpdateCallback(self, msg):
         rospy.loginfo("map update received")
         
@@ -66,32 +124,48 @@ class ExplorerNodeBase(object):
         self.deltaOccupancyGrid.updateGridFromVector(msg.deltaOccupancyGrid)
         
         # Update the frontiers
-        self.updateFrontiers()
+        if (self.explorerAlgorithm == 1):
+            self.updateFrontiers()
 
         # Flag there's something to show graphically
         self.visualisationUpdateRequired = True
 
+    # Get known neighbouring cells
+    def getNeighbouringCells(self, cell, occupancyGrid):
+        adj_cells = []
+        increments = [(0,-1),(1,-1),(1,0),(1,1),(0,1),(-1,1),(-1,0),(-1,-1)]
+
+        for d in increments:
+            new_cell = (cell[0]+d[0], cell[1]+d[1])
+            if (occupancyGrid.grid[new_cell[0]][new_cell[1]] != 0.5):
+                adj_cells.append(new_cell)
+
+        return adj_cells
+
     # This method determines if a cell is a frontier cell or not. A
     # frontier cell is open and has at least one neighbour which is
     # unknown.
-    def isFrontierCell(self, x, y):
+    def isFrontierCell(self, x, y, occupancyGrid=False):
+
+        if not occupancyGrid:
+            occupancyGrid = self.occupancyGrid
 
         # Check the cell to see if it's open
-        if self.occupancyGrid.getCell(x, y) != 0:
+        if occupancyGrid.getCell(x, y) != 0:
             return False
 
         # Check the neighbouring cells; if at least one of them is unknown, it's a frontier
-        return self.checkIfCellIsUnknown(x, y, -1, -1) | self.checkIfCellIsUnknown(x, y, 0, -1) \
-            | self.checkIfCellIsUnknown(x, y, 1, -1) | self.checkIfCellIsUnknown(x, y, 1, 0) \
-            | self.checkIfCellIsUnknown(x, y, 1, 1) | self.checkIfCellIsUnknown(x, y, 0, 1) \
-            | self.checkIfCellIsUnknown(x, y, -1, 1) | self.checkIfCellIsUnknown(x, y, -1, 0)
+        return self.checkIfCellIsUnknown(x, y, -1, -1, occupancyGrid) | self.checkIfCellIsUnknown(x, y, 0, -1, occupancyGrid) \
+            | self.checkIfCellIsUnknown(x, y, 1, -1, occupancyGrid) | self.checkIfCellIsUnknown(x, y, 1, 0, occupancyGrid) \
+            | self.checkIfCellIsUnknown(x, y, 1, 1, occupancyGrid) | self.checkIfCellIsUnknown(x, y, 0, 1, occupancyGrid) \
+            | self.checkIfCellIsUnknown(x, y, -1, 1, occupancyGrid) | self.checkIfCellIsUnknown(x, y, -1, 0, occupancyGrid)
             
-    def checkIfCellIsUnknown(self, x, y, offsetX, offsetY):
+    def checkIfCellIsUnknown(self, x, y, offsetX, offsetY, occupancyGrid):
         newX = x + offsetX
         newY = y + offsetY
-        return (newX >= 0) & (newX < self.occupancyGrid.getWidthInCells()) \
-            & (newY >= 0) & (newY < self.occupancyGrid.getHeightInCells()) \
-            & (self.occupancyGrid.getCell(newX, newY) == 0.5)
+        return (newX >= 0) & (newX < occupancyGrid.getWidthInCells()) \
+            & (newY >= 0) & (newY < occupancyGrid.getHeightInCells()) \
+            & (occupancyGrid.getCell(newX, newY) == 0.5)
 
     # You should provide your own implementation of this method which
     # maintains and updates the frontiers.  The method should return
@@ -161,14 +235,77 @@ class ExplorerNodeBase(object):
         velocityMessage = Twist()
         velocityPublisher.publish(velocityMessage)
         rospy.sleep(1)
-            
+    
+    def computeCoverage(self):
+
+        totalCells = float(self.occupancyGrid.getWidthInCells() * self.occupancyGrid.getHeightInCells())
+        coveredCells = 0.0
+        for x in range(0, self.occupancyGrid.getWidthInCells()):
+            for y in range(0, self.occupancyGrid.getHeightInCells()):
+                if not (self.checkIfCellIsUnknown(x,y,0,0,self.occupancyGrid)):
+                    coveredCells = coveredCells + 1
+        
+        coverage = coveredCells/totalCells
+        return coverage
+
+    def exportData(self):
+
+        column_headers = ['Explorer Algorithm','Coverage','Time Taken to Explore',
+                          'ROS Time Scale Factor', 'Start/End Validated by Search Grid']
+
+        data = [self.explorerAlgorithm, self.coverage, self.timeTakenToExplore,
+                rospy.get_param('time_scale_factor',0), 
+                rospy.get_param('use_search_grid_to_validate_start_and_end', 'N/A')]
+
+        # If directory doesn't exist create directory
+        if not os.path.exists(os.path.split(self.exportFileDir)[0]):
+            os.makedirs(os.path.split(self.exportFileDir)[0])
+
+        # If file doesn't exist create file
+        if(os.path.isfile(self.exportFileDir)):
+            isFileEmpty = (os.stat(self.exportFileDir).st_size == 0)
+        else:
+            isFileEmpty = True
+
+        rowList=[]
+        rowFound=False
+
+        if isFileEmpty:
+            with open(self.exportFileDir, 'w') as write_csvfile:
+                # Instanstiate writer
+                writer = csv.writer(write_csvfile)
+                writer.writerow(column_headers)
+                writer.writerow(data)
+        else:
+            with open(self.exportFileDir, 'r') as read_csvfile:
+                # Instantiate reader
+                reader = csv.reader(read_csvfile)
+                # Find if row already exists for that planner
+                for row in reader:
+                    if(str(row[0])==str(self.explorerAlgorithm) and str(row[3])==str(rospy.get_param('time_scale_factor',0)) and str(row[4])==str(rospy.get_param('use_search_grid_to_validate_start_and_end', 'N/A'))):
+                        rowFound=True
+                    else:
+                        rowList.append(row)
+            # If row was not found then append file.          
+            if(not rowFound):
+                with open(self.exportFileDir, 'a') as write_csvfile:
+                    writer = csv.writer(write_csvfile)
+                    writer.writerow(data)
+            # If row was found then rewrite the whole file without the old row
+            else:
+                with open(self.exportFileDir, 'w') as write_csvfile:
+                    rowList.append(data)
+                    writer = csv.writer(write_csvfile)
+                    for row in rowList:
+                        writer.writerow(row)
+
+
     class ExplorerThread(threading.Thread):
         def __init__(self, explorer):
             threading.Thread.__init__(self)
             self.explorer = explorer
             self.running = False
-            self.completed = False;
-
+            self.completed = False
 
         def isRunning(self):
             return self.running
@@ -179,6 +316,7 @@ class ExplorerNodeBase(object):
         def run(self):
 
             self.running = True
+            startTime = rospy.get_time()
 
             while (rospy.is_shutdown() is False) & (self.completed is False):
 
@@ -186,9 +324,11 @@ class ExplorerNodeBase(object):
                 # has started, stdr needs a kicking to generate laser
                 # messages. To do this, we get the robot to
                 
-
                 # Create a new robot waypoint if required
-                newDestinationAvailable, newDestination = self.explorer.chooseNewDestination()
+                if (self.explorer.explorerAlgorithm == 1):
+                    newDestinationAvailable, newDestination = self.explorer.chooseNewDestination()
+                else:
+                    newDestinationAvailable, newDestination = self.explorer.chooseNewDestinationOld()
 
                 # Convert to world coordinates, because this is what the robot understands
                 if newDestinationAvailable is True:
@@ -198,8 +338,17 @@ class ExplorerNodeBase(object):
                     self.explorer.destinationReached(newDestination, attempt)
                 else:
                     self.completed = True
-                    
-       
+                    endTime = rospy.get_time()
+                    ros_time_scale_factor = rospy.get_param('time_scale_factor',1.5)
+                    self.explorer.timeTakenToExplore = (endTime - startTime)
+                    self.explorer.coverage = self.explorer.computeCoverage() 
+
+                    print("Time scale factor: " + str(ros_time_scale_factor))
+                    print("Time taken to explore map: " + str(self.explorer.timeTakenToExplore) + "s")
+                    print("Proportion of map explored: " + str(self.explorer.coverage))
+
+                    self.explorer.exportData()
+
     def run(self):
 
         explorerThread = ExplorerNodeBase.ExplorerThread(self)
@@ -217,10 +366,9 @@ class ExplorerNodeBase(object):
 
             if explorerThread.isRunning() is False:
                 explorerThread.start()
+                
 
             if explorerThread.hasCompleted() is True:
+                self.occupancyGridDrawer.saveAsImage(self.mapExportFile)
                 explorerThread.join()
                 keepRunning = False
-
-            
-            

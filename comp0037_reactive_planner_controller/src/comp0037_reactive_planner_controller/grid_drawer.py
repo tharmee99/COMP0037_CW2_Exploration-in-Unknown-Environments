@@ -6,6 +6,9 @@ from cell import *
 from graphics import Rectangle
 from graphics import Point
 import graphics
+import os
+
+from PIL import Image as NewImage
 
 # This file contains some generic routines for managing the graphics display window.
 
@@ -92,6 +95,15 @@ class BaseDrawer(object):
             input("Press enter to continue...")
         except SyntaxError:
             pass
+    
+    def saveAsImage(self, exportFileDir):
+        baseDir = os.path.split(exportFileDir)[0]
+
+        if not os.path.exists(baseDir):
+            os.makedirs(baseDir)
+            
+        self.window.postscript(file=exportFileDir, colormode='color')
+        
 
 class SearchGridDrawer(BaseDrawer):
 
@@ -172,6 +184,7 @@ class OccupancyGridDrawer(BaseDrawer):
         BaseDrawer.__init__(self, title, occupancyGrid.getExtentInCells(), 
                             maximumWindowHeightInPixels)
         self.occupancyGrid = occupancyGrid;
+        self.visualizeCellStates = rospy.get_param('visualize_cell_states', True)
 
     def drawGrid(self):
 
@@ -181,10 +194,17 @@ class OccupancyGridDrawer(BaseDrawer):
             if rospy.is_shutdown():
                 return
             for j in range(cellExtent[1]):
-                cellWeight = 1.0 - self.occupancyGrid.getCell(i, j)
-                hexWeight = '{:02x}'.format(int(cellWeight*255))
-                colour = '#' + hexWeight + hexWeight + hexWeight
-                self.rectangles[i][j].setFill(colour);
+                if (self.visualizeCellStates) and (self.occupancyGrid.blacklistCell[i][j]):
+                    colour = '#' + "FF0000"
+                    self.rectangles[i][j].setFill(colour);
+                elif (self.visualizeCellStates) and (self.occupancyGrid.frontierCell[i][j]):
+                    colour = '#' + "FFFF00"
+                    self.rectangles[i][j].setFill(colour);
+                else:
+                    cellWeight = 1.0 - self.occupancyGrid.getCell(i, j)
+                    hexWeight = '{:02x}'.format(int(cellWeight*255))
+                    colour = '#' + hexWeight + hexWeight + hexWeight
+                    self.rectangles[i][j].setFill(colour);
 
                 
     def reset(self):

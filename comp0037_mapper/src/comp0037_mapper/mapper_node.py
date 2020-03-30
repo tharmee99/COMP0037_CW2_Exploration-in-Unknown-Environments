@@ -5,6 +5,9 @@ import rospy
 import math
 import tf
 import copy
+import time
+import os
+import datetime
 
 import numpy as np
 from nav_msgs.srv import GetMap
@@ -88,9 +91,36 @@ class MapperNode(object):
         # Set up the subscribers. These track the robot position, speed and laser scans.
         self.mostRecentOdometry = Odometry()
         self.odometrySubscriber = rospy.Subscriber("robot0/odom", Odometry, self.odometryCallback, queue_size=1)
-        self.mostRecentTwist = Twist();
+        self.mostRecentTwist = Twist()
         self.twistSubscriber = rospy.Subscriber('/robot0/cmd_vel', Twist, self.twistCallback, queue_size=1)
         self.laserSubscriber = rospy.Subscriber("robot0/laser_0", LaserScan, self.laserScanCallback, queue_size=1)
+
+        # Entropy Variables
+        self.entropyUpdatePeriod = 5
+        self.lastEntropyUpdate = 0
+
+        self.time_scale_factor = rospy.get_param('time_scale_factor',0)
+
+        exportDirectory = ''
+
+        if (len(sys.argv) > 1):
+            exportDirectory = sys.argv[1]
+
+        if not os.path.exists(exportDirectory):
+            os.makedirs(exportDirectory)
+        
+        taskNum = rospy.get_param('task_num', 0)
+
+        explorerAlgorithm = rospy.get_param('explorer_algorithm', 0)
+        if (explorerAlgorithm == 1):
+            explorer = "WFD"
+        else:
+            explorer = "baseline"
+
+        self.entropyExportFile = os.path.join(exportDirectory,("entropy_task" + str(taskNum) + "_" + explorer + "_TSF" + str(self.time_scale_factor) + ".csv"))
+
+        open(self.entropyExportFile, 'w').close()
+
 
     def odometryCallback(self, msg):
         self.dataCopyLock.acquire()
@@ -335,12 +365,45 @@ class MapperNode(object):
 
         return mapUpdateMessage
 
+    def computeCellEntropy(self, cellCoords):
+        cellEntropy = None
         
+        p1 = self.occupancyGrid.getCell(cellCoords[0],cellCoords[1])
+        p2 = 1 - p1
+        
+        # print("p1:" + str(p1) + ", p2:" + str(p2))
+
+        if ((p1 == 1) or (p1 == 0)):
+            cellEntropy = 0
+        else:
+            p1Entropy = p1 * math.log(p1)
+            p2Entropy = p2 * math.log(p2)
+
+            cellEntropy = (-1)*(p1Entropy + p2Entropy)
+
+        return cellEntropy
+    
+    def computeMapEntropy(self):
+        totalEntropy = 0
+        
+        for x in range(0, self.occupancyGrid.getWidthInCells()):
+            for y in range(0, self.occupancyGrid.getHeightInCells()):
+                totalEntropy = totalEntropy + self.computeCellEntropy((x,y))
+        
+        with open(self.entropyExportFile, "a") as exportFile:
+            exportFile.write(str(totalEntropy) + ',')
+
+        return totalEntropy
+
     def run(self):
         while not rospy.is_shutdown():
             self.updateVisualisation()
-            rospy.sleep(0.1)
-        
-  
 
-  
+            currSimulationTime = rospy.get_time()
+            
+            if ((currSimulationTime - self.lastEntropyUpdate) >= self.entropyUpdatePeriod):
+                print("Entropy: " + str(self.computeMapEntropy()))
+                self.lastEntropyUpdate = rospy.get_time()
+            
+            rospy.sleep(0.1)
+            
