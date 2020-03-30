@@ -9,8 +9,10 @@
 \usepackage{setspace}
 \usepackage{appendix}
 \usepackage{amsmath}
+\usepackage{cite}
 \usepackage{caption}
 \usepackage{subcaption}
+
 
 %***************************************DOCUMENT***************************************
 
@@ -53,7 +55,7 @@
 				
 				\begin{tabular}{ll}
 					\textbf{Department:} &  Department of Electronic and Electrical Engineering\\ \vspace{3mm}
-					\textbf{Submission Date:} &  17\textsuperscript{th} of March 2020
+					\textbf{Submission Date:} &  31\textsuperscript{st} of March 2020
 				\end{tabular}
 			\end{center}
 	\end{titlepage}
@@ -91,7 +93,7 @@
 					\includegraphics[width=.7\linewidth]{images/mapperNodeOccupancyGrid.png}
 					\caption{Mapper Node occupancy grid}
 					\label{mapperNodeOccupancyGrid}
-				\end{subfigure}%
+				\end{subfigure}
 				\begin{subfigure}{.5\textwidth}
 					\centering
 					\includegraphics[width=.7\linewidth]{images/robotLaserRange.png}
@@ -107,7 +109,7 @@
 			Our implementation of a reactive planner is quite inefficient and may be computationally intense. The current global planner that is used to plan the paths uses an implementation of Dijkstra's algorithm to plan the path. One way of improving the performance is by utilizing the A* algorithm. This way fewer cells will be considered when planning the path resulting in a lower computational cost.
 			\\
 			\\
-			Another method of improving efficiency is to prevent the algorithm from having to re-plan the whole path. In a dynamic environment, obstacles may move in and out of the robot's path. Therefore, sometimes it may be sufficient to take a remedial action to overcome/avoid the obstacle. This may involve simply waiting for the obstacle to pass or in more complicated cases it may involve the robot moving the obstacle out of the way. How-ever not all obstacles may be overcome in such a way. For example a newly discovered wall will neither move on its own nor is it possible for the robot to move the wall. In such a case, a local planner may be utilized to plan a path around the obstacle. This involves planning a path to another point on the proposed path and thereby avoiding the obstacle. These local planners are very responsive and generally utilize gradient-based techniques which use physics-based approximations. Despite being fast and responsive, they generally get stuck in local minima. 
+			Another method of improving efficiency is to prevent the algorithm from having to re-plan the whole path. In a dynamic environment, obstacles may move in and out of the robot's path. Therefore, sometimes it may be sufficient to take a remedial action to overcome/avoid the obstacle. This may involve simply waiting for the obstacle to pass or in more complicated cases it may involve the robot moving the obstacle out of the way. However, not all obstacles may be overcome in such a way. For example, a newly discovered wall will neither move on its own nor is it possible for the robot to move the wall. In such a case, a local planner may be utilized to plan a path around the obstacle. This involves planning a path to another point on the proposed path and thereby avoiding the obstacle. These local planners are very responsive and generally utilize gradient-based techniques which use physics-based approximations. Despite being fast and responsive, they generally get stuck in local minima. 
 			
 	%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 	
@@ -116,7 +118,9 @@
 
 		\subsection{Frontier Exploration}
 
-			A frontier is a group of cells which marks the border between the known portion of the world and the unknown portion of the world. For a cell to be classed as a frontier cell it's state must be known to be free and it must have an adjacent cell of which the state is not known. An example of a frontier can be found in Fig \ref{frontierExample}. Frontiers are useful in exploring unknown environments as travelling to these cells will allow the robot to find out more about the unknown portion of the map. There are multiple algorithms for detecting frontiers and choosing the optimal next destination to allow the robot to maximise it's knowledge of the surrounding. Some of these approaches will be discussed in this chapter.
+			A frontier is a region or group of cells which marks the boundary between the known open space of the environment and the unknown and unexplored space of the environment. For a cell to be classified as a frontier cell, it's state must be known to be free and it must have an adjacent cell of which the state is not known. Two adjacent frontier cells are considered to be part of the same frontier (i.e. the same boundary) if the previous cell scanned was also a frontier cell.\cite{keidar2011fast}
+			
+			An example of a frontier can be found in Fig \ref{frontierExample}. Frontiers are useful in exploring unknown environments as travelling to these cells will allow the robot to find out more about the unknown portion of the map. There are multiple algorithms for detecting frontiers and choosing the optimal next destination to allow the robot to maximise it's knowledge of the surrounding. Some of these approaches will be discussed in this chapter.
 
 			\begin{figure}[H]
 				\centering
@@ -127,11 +131,11 @@
 
 			\subsection{Frontier Detection}
 
-				Two algorithms for frontier detection will be discussed. One of them is Wave-front Frontier Detection (WFD) and the other is Fast Frontier Detection (FFD). As the name implies the FFD algorithm is less computationally intense and scales better to larger problems due to its higher efficiency. However both of these algorithm provide the same result in identifying frontiers.
+				Two algorithms for frontier detection will be discussed. One of them is Wave-front Frontier Detection (WFD) and the other is Fast Frontier Detection (FFD). As the name implies the FFD algorithm is less computationally intense and scales better to larger problems due to its higher efficiency. However, both of these algorithm provide the same result in identifying frontiers.
 				
 				\subsubsection{Wave-front Frontier Detection}
 
-				The WFD algorithm works by implementing two nested Breadth First Search (BFS) algorithms. This search algorithm utilizes a First In First Out (FIFO) queue to manage the cells that are searched over. The starting cell is set as the current pose of the robot. From this cell, the outer BFS algorithm traverses neighbouring cells and checks if each one of them is a frontier cell. If a frontier cell is found the cell is added to the FIFO queue of the inner BFS algorithm and the neighbouring cells of this cell are checked to see if they too are frontier cells. If they are then they are added to the inner queue and this continues until all frontier cells in the cluster are found. Once no more cells are on the queue, we break out of the inner BFS and continue on the outer BFS until another frontier cell is encountered. The pseudocode for this algorithm can be found in Fig. \ref{wfdPseudocode}. In this pseudocode the cells are assigned to 5 different states: Unvisited, Map-Open List, Map-Close List, Frontier-Open List and Frontier-Close List. Initially all cells are unvisited. If enqueued by the outer BFS, the cell is labelled as Map-Open List and once dequeued by the outer BFS it is labelled as Map-Close List. Similarly if enqueued by the inner BFS, the cell is labelled as Frontier-Open List and once dequeue it is labelled as Frontier-Close List. 
+				The WFD algorithm works by implementing two nested Breadth First Search (BFS) algorithms. This search algorithm utilizes a First In First Out (FIFO) queue to manage the cells that are searched over. The starting cell is set as the current pose of the robot. From this cell, the outer BFS algorithm traverses neighbouring cells and checks if each one of them is a frontier cell. If a frontier cell is found the cell is added to the FIFO queue of the inner BFS algorithm and the neighbouring cells of this cell are checked to see if they too are frontier cells. If they are then they are added to the inner queue and this continues until all frontier cells in the cluster are found. Once no more cells are on the queue, we break out of the inner BFS and continue on the outer BFS until another frontier cell is encountered. The pseudocode for this algorithm can be found in Fig. \ref{wfdPseudocode}. In this pseudocode the cells are assigned to 5 different states: \textbf{Unvisited}, \textbf{Map-Open List}, \textbf{Map-Close List}, \textbf{Frontier-Open List} and \textbf{Frontier-Close List}. Initially all cells are unvisited. If enqueued by the outer BFS, the cell is labelled as \textit{'Map-Open List'} and once dequeued by the outer BFS it is labelled as \textit{'Map-Close List'}. Similarly if enqueued by the inner BFS, the cell is labelled as \textit{'Frontier-Open List'} and once dequeue it is labelled as \textit{'Frontier-Close List'}. 
 				
 				\subsubsection{Fast Frontier Detection}
 
@@ -151,7 +155,7 @@
 						\caption{Fast Frontier Detection Pseudocode}
 						\label{ffdPseudocode}
 					\end{subfigure}
-					\caption{Pseudocode for the two frontier detection algorithms discussed.}
+					\caption{Pseudocode for the two frontier detection algorithms discussed. \cite{topiwala2018frontier, keidar2011fast}}
 					\label{frontierSearchPseudocode}
 				\end{figure}
 
