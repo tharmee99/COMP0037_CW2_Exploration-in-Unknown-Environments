@@ -8,7 +8,7 @@
 \usepackage{float}
 \usepackage{setspace}
 \usepackage{appendix}
-
+\usepackage{amsmath}
 \usepackage{caption}
 \usepackage{subcaption}
 
@@ -221,7 +221,15 @@
 				\label{eq:singleCellEntropy1}
 			\end{equation}
 			
-			In our example, cells are either known to be occupied/free or unknown. Additionally, the state of a cell can either be occupied or free. Therefore the above mentioned sum has only two terms. Furthermore given that the probability of a cell being occupied and the probability of a cell being free sum to 1, the sum depends on only one probability. This simplified version of the entropy of a cell can be found in Eq. \ref{eq:singleCellEntropy}. 
+			In our example, cells are either known to be occupied/free or unknown. Additionally, the state of a cell can either be occupied or free. Therefore the above mentioned sum has only two terms. Furthermore given that the probability of a cell being occupied and the probability of a cell being free sum to 1, the sum depends on only one probability. This simplified version of the entropy of a cell can be found in Eq. \ref{eq:singleCellEntropy}. In this equation the probability $p\left(\textbf{c}\right)$ represents the probability of the cell being occupied. The occupancy grid for our simplified case consisting of cells with probabilities equal to 0, 0.5 or 1 can be shown to have cells of entropy as follows:
+
+			\begin{align}
+				\nonumber p\left(\textbf{c}\right) = 0 \; &: \; H \left(\textbf{c}\right) = -(1)ln(1)-0ln(0) = 0 \\
+				\nonumber p\left(\textbf{c}\right) = 0.5 \; &: \; H \left(\textbf{c}\right) = -(0.5)ln(0.5)-0.5ln(0.5) = ln2 \\
+				\nonumber p\left(\textbf{c}\right) = 1 \; &: \; H \left(\textbf{c}\right) = -(0)ln(0)-1ln(1) = 0 \\
+			\end{align}
+
+
 
 		\subsection{Evolution of Entropy over Time}
 
