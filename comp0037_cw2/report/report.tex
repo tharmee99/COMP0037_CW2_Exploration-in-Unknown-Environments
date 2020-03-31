@@ -86,17 +86,18 @@
 			Our implementation of a reactive planner can be found in the file: \textit{reactive\textunderscore planner\textunderscore controller.py} in which it can be seen that the callback function\textit{ mapUpdateCallback()} is called each time the map gets updated. \textit{mapUpdateCallback()} invokes the function \textit{checkIfPathCurrentPathIsStillGood()} which checks if the cells on the planned path have the label \textit{OBSTRUCTED} in the updated map. If this is True, then \textit{controller.stopDrivingToCurrentGoal()} is called and the path to goal is re-planned with the updated map information. If not, it continues on the same path and the process repeats.
 			\\
 			\\
-			To test this implementation, the robot was set to visit a list of goals on the factory map. The final mapper node occupancy grid is shown in Fig.\ref{mapperNodeOccupancyGrid}. It is clear from the map that there are inaccuracies in the mapping of the world as well as some areas which have still not been explored completely. The inaccuracies occur as a result of rounding errors and other noise due to timing mismatch (caused by networking delays), these errors are mostly corrected as the robot re-explores an area. 
+			To test this implementation, the robot was set to visit a list of goals on the factory map. The final mapper node occupancy grid is shown in Fig.\ref{mapperNodeOccupancyGrid}. There were 2 launch scripts provided to us. The one on the left had reachable waypoints whereas the second launch script used an unreachable goal this is why only half the map was explored before the planner realised that it cannot reach the goal. So the process finished cleanly with the message for the second launch script with a message that it cannot find path to goal whereas for the first launch script it ran through all given waypoints. It is clear from the map that there are inaccuracies in the mapping of the world as well as some areas which have still not been explored completely. The inaccuracies occur as a result of rounding errors and other noise due to timing mismatch (caused by networking delays), these errors are mostly corrected as the robot re-explores an area. 
 			\\
 			\\
 			The map is updated using the laser range finder that the robot is equipped with. Depending on the reflections of this laser, the environment surrounding the robot can be mapped. Fig.\ref{robotLaserRange} depicts an instance in time of the robot. The red lines represent the individual laser beams used to map the surrounding environment. It is clear to see that the laser beam is stopped (and reflected) by the opaque walls. By measuring the time taken for the reflected beam to return, the distance to the opaque object can be calculated. In addition to this, it can also be seen that some of the beams stop despite not having hit any opaque objects. This is due to the maximum measurable range of the laser range detector. 
+
 
 			\begin{figure}[H]
 				\centering
 				\begin{subfigure}{.5\textwidth}
 					\centering
-					\includegraphics[width=.7\linewidth]{images/mapperNodeOccupancyGrid.png}
-					\caption{Mapper Node occupancy grid}
+					\includegraphics[width=1.5\linewidth]{images/mapperNodeOccupancyGrid.png}
+					\caption{Mapper Node occupancy grid on launch script 1 (left) and 2 (right)}
 					\label{mapperNodeOccupancyGrid}
 				\end{subfigure}
 				\begin{subfigure}{.5\textwidth}
