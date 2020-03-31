@@ -369,17 +369,11 @@ class MapperNode(object):
         cellEntropy = None
         
         p1 = self.occupancyGrid.getCell(cellCoords[0],cellCoords[1])
-        p2 = 1 - p1
-        
-        # print("p1:" + str(p1) + ", p2:" + str(p2))
 
         if ((p1 == 1) or (p1 == 0)):
             cellEntropy = 0
         else:
-            p1Entropy = p1 * math.log(p1)
-            p2Entropy = p2 * math.log(p2)
-
-            cellEntropy = (-1)*(p1Entropy + p2Entropy)
+            cellEntropy = math.log(2)
 
         return cellEntropy
     

@@ -8,12 +8,18 @@
 \usepackage{float}
 \usepackage{setspace}
 \usepackage{appendix}
+\usepackage{amsmath}
 \usepackage{cite}
 \usepackage{caption}
 \usepackage{subcaption}
 
 
 %***************************************DOCUMENT***************************************
+
+\DeclareMathOperator*{\argmin}{\arg\!\min}
+\DeclareMathOperator*{\argmax}{\arg\!\max}
+
+\setlength{\parindent}{0em}
 
 \begin{document}
 	\fontfamily{ptm}\selectfont
@@ -74,13 +80,16 @@
 	
 		\subsection{Our Implementation of a Reactive Planner}
 
-			A reactive planner is able to adapt its path based on the information it obtains about the environment as it explores it. The high-level functionality of a general reactive planner is described in the flowchart in Fig.\ref{reactivePlannerFlowchart}. The reactive planner initially utilizes the available occupancy grid and computes a search grid from this grid assuming any unknown cells to be free. The computation of the search grid instead of utilizing the occupancy grid directly will prevent the robot from ending up too close to the walls. The planner then plans a path using this assumption and starts to traverse the path. The robot will explore the environment as it traverses the path and if new information suggests that the currently planned path is no longer traversable, a new path is planned using the new occupancy grid and search grid. This process is repeated until the robot arrives at the goal.
+			A reactive planner is able to adapt its path based on the information it obtains about the environment as it explores it. The high-level functionality of a general reactive planner is described in the flowchart in Fig.\ref{reactivePlannerFlowchart}. The reactive planner initially utilizes the available occupancy grid and computes a search grid from this grid assuming any unknown cells to be free. The computation of the search grid instead of utilizing the occupancy grid directly, will prevent the robot from ending up too close to the walls. First, the planner plans a path using this assumption and starts to traverse the path. The robot will explore the environment as it traverses the path and whenever the map is updated the robot checks to see if the originally planned path is still traversable. If the new information suggests that the currently planned path is no longer traversable, then a new path is planned using the new occupancy grid and search grid. This process is repeated until the robot reaches its goal.
 			\\
 			\\
-			As a means of testing the code the robot was set to visit a list of goals on the factory map. The final mapper node occupancy grid is shown in Fig.\ref{mapperNodeOccupancyGrid}. It is clear to see that there are inaccuracies in the mapping of the world as well as some areas which have still not been explored completely. The inaccuracies occur as a result of rounding errors and other noise due to timing mismatch (caused by networking delays), these errors are mostly corrected as the robot re-explores an area.
+			Our implementation of a reactive planner can be found in the file: \textit{reactive\textunderscore planner\textunderscore controller.py} in which it can be seen that the callback function\textit{ mapUpdateCallback()} is called each time the map gets updated. \textit{mapUpdateCallback()} invokes the function \textit{checkIfPathCurrentPathIsStillGood()} which checks if the cells on the planned path have the label \textit{OBSTRUCTED} in the updated map. If this is True, then \textit{controller.stopDrivingToCurrentGoal()} is called and the path to goal is re-planned with the updated map information. If not, it continues on the same path and the process repeats.
 			\\
 			\\
-			The way the map is updated is using the laser range finder that the robot is equipped with. Depending on the reflections of this laser, the environment surrounding the robot can be mapped. Fig.\ref{robotLaserRange} depicts an instance in time of the robot. The red lines represent the individual laser beams used to map the surrounding environment. It is clear to see that the laser beam is stopped (and reflected) by the opaque walls. By measuring the time taken for the reflected beam to return, the distance to the opaque object can be calculated. In addition to this, it can also be seen that some of the beams stop despite not having hit any opaque objects. This is due to the maximum measurable range of the laser range detector. 
+			To test this implementation, the robot was set to visit a list of goals on the factory map. The final mapper node occupancy grid is shown in Fig.\ref{mapperNodeOccupancyGrid}. It is clear from the map that there are inaccuracies in the mapping of the world as well as some areas which have still not been explored completely. The inaccuracies occur as a result of rounding errors and other noise due to timing mismatch (caused by networking delays), these errors are mostly corrected as the robot re-explores an area. 
+			\\
+			\\
+			The map is updated using the laser range finder that the robot is equipped with. Depending on the reflections of this laser, the environment surrounding the robot can be mapped. Fig.\ref{robotLaserRange} depicts an instance in time of the robot. The red lines represent the individual laser beams used to map the surrounding environment. It is clear to see that the laser beam is stopped (and reflected) by the opaque walls. By measuring the time taken for the reflected beam to return, the distance to the opaque object can be calculated. In addition to this, it can also be seen that some of the beams stop despite not having hit any opaque objects. This is due to the maximum measurable range of the laser range detector. 
 
 			\begin{figure}[H]
 				\centering
@@ -102,10 +111,10 @@
 
 		\subsection{Improving the performance of the Reactive Planner}
 
-			Our implementation of a reactive planner is quite inefficient and may be computationally intense. The current global planner that is used to plan the paths uses an implementation of Dijkstra's algorithm to plan the path. One way of improving the performance is by utilizing the A* algorithm. This way fewer cells will be considered when planning the path resulting in a lower computational cost.
+			Our implementation of a reactive planner is quite inefficient and may be computationally intense. The current global planner that is used to plan the paths uses an implementation of Dijkstra's algorithm to plan the path. One way of improving the performance of the planner itself is by utilizing the A* algorithm. This way fewer cells will be considered when planning the path resulting in a lower computational cost.
 			\\
 			\\
-			Another method of improving efficiency is to prevent the algorithm from having to re-plan the whole path. In a dynamic environment, obstacles may move in and out of the robot's path. Therefore, sometimes it may be sufficient to take a remedial action to overcome/avoid the obstacle. This may involve simply waiting for the obstacle to pass or in more complicated cases it may involve the robot moving the obstacle out of the way. However, not all obstacles may be overcome in such a way. For example, a newly discovered wall will neither move on its own nor is it possible for the robot to move the wall. In such a case, a local planner may be utilized to plan a path around the obstacle. This involves planning a path to another point on the proposed path and thereby avoiding the obstacle. These local planners are very responsive and generally utilize gradient-based techniques which use physics-based approximations. Despite being fast and responsive, they generally get stuck in local minima. 
+			Another method of improving efficiency is to prevent the algorithm from having to re-plan the whole path. In a dynamic environment, obstacles may move in and out of the robot's path. Therefore, sometimes it may be sufficient to take a remedial action to overcome/avoid the obstacle. This may involve simply waiting for the obstacle to pass or in more complicated cases it may involve the robot moving the obstacle out of the way. However, not all obstacles may be overcome in such a way. For example, a newly discovered wall will neither move on its own nor is it possible for the robot to move the wall. In such a case, a local planner may be utilized to plan a path around the obstacle. This involves planning a path to another point on the proposed path and thereby avoiding the obstacle. These local planners are very responsive and generally utilize gradient-based techniques which use physics-based approximations. However, despite being fast and responsive they generally get stuck in local minima. 
 			
 	%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 	
@@ -114,9 +123,9 @@
 
 		\subsection{Frontier Exploration}
 
-			A frontier is a region or group of cells which marks the boundary between the known open space of the environment and the unknown and unexplored space of the environment. For a cell to be classified as a frontier cell, it's state must be known to be free and it must have an adjacent cell of which the state is not known. Two adjacent frontier cells are considered to be part of the same frontier (i.e. the same boundary) if the previous cell scanned was also a frontier cell.\cite{keidar2011fast}
+			A frontier is a region or a group of cells which marks the boundary between the known open space and the unknown/unexplored space of the environment being explored. For a cell to be classified as a frontier cell, it's state must be known to be free and it must have an adjacent cell of which the state is not known. Two frontier cells are considered to be part of the same frontier (i.e. the same boundary) if the adjacent cell that was previously scanned was also a frontier cell.\cite{keidar2011fast}
 			
-			An example of a frontier can be found in Fig \ref{frontierExample}. Frontiers are useful in exploring unknown environments as travelling to these cells will allow the robot to find out more about the unknown portion of the map. There are multiple algorithms for detecting frontiers and choosing the optimal next destination to allow the robot to maximise it's knowledge of the surrounding. Some of these approaches will be discussed in this chapter.
+			An example of a frontier can be found in Fig \ref{frontierExample}. Frontiers are useful in exploring unknown environments as it provides a systematic approach to decide which cell to go to next to continue exploring the unknown portion of the map with a considerable coverage. There are multiple algorithms that involve detecting frontiers and choosing the optimal next destination to allow the robot to maximise it's knowledge of the surrounding. Some of these approaches will be discussed in this chapter.
 
 			\begin{figure}[H]
 				\centering
@@ -127,15 +136,15 @@
 
 			\subsection{Frontier Detection}
 
-				Two algorithms for frontier detection will be discussed. One of them is Wave-front Frontier Detection (WFD) and the other is Fast Frontier Detection (FFD). As the name implies the FFD algorithm is less computationally intense and scales better to larger problems due to its higher efficiency. However, both of these algorithm provide the same result in identifying frontiers.
+				Two algorithms for frontier detection will be discussed. One of them is Wave-front Frontier Detection (WFD) algorithm and the other is Fast Frontier Detection (FFD) algorithm. As the name implies the FFD algorithm is less computationally intense, faster and scales better to larger problems due to its higher efficiency. However, both of these algorithms provide the same result in identifying frontiers.
 				
 				\subsubsection{Wave-front Frontier Detection}
 
-				The WFD algorithm works by implementing two nested Breadth First Search (BFS) algorithms. This search algorithm utilizes a First In First Out (FIFO) queue to manage the cells that are searched over. The starting cell is set as the current pose of the robot. From this cell, the outer BFS algorithm traverses neighbouring cells and checks if each one of them is a frontier cell. If a frontier cell is found the cell is added to the FIFO queue of the inner BFS algorithm and the neighbouring cells of this cell are checked to see if they too are frontier cells. If they are then they are added to the inner queue and this continues until all frontier cells in the cluster are found. Once no more cells are on the queue, we break out of the inner BFS and continue on the outer BFS until another frontier cell is encountered. The pseudocode for this algorithm can be found in Fig. \ref{wfdPseudocode}. In this pseudocode the cells are assigned to 5 different states: \textbf{Unvisited}, \textbf{Map-Open List}, \textbf{Map-Close List}, \textbf{Frontier-Open List} and \textbf{Frontier-Close List}. Initially all cells are unvisited. If enqueued by the outer BFS, the cell is labelled as \textit{'Map-Open List'} and once dequeued by the outer BFS it is labelled as \textit{'Map-Close List'}. Similarly if enqueued by the inner BFS, the cell is labelled as \textit{'Frontier-Open List'} and once dequeue it is labelled as \textit{'Frontier-Close List'}. 
+				The WFD algorithm works by implementing two nested Breadth First Search (BFS) algorithms. This search algorithm utilizes a First In First Out (FIFO) queue to manage the cells that are searched over. The starting cell is set as the current pose of the robot. From this cell, the outer BFS algorithm traverses to its neighbouring cells and checks if each one of them is a frontier cell. If a frontier cell is found, the cell is added to the FIFO queue of the inner BFS algorithm and the neighbouring cells of this cell are checked to see if they are frontier cells as well. If they are, then they are added to the inner queue and this continues until all frontier cells in the cluster are found. Once no more cells are on the queue, we break out of the inner BFS and continue on the outer BFS until another frontier cell is encountered. The pseudocode for this algorithm can be found in Fig. \ref{wfdPseudocode} \cite{topiwala2018frontier}. In this pseudocode the cells are assigned to 5 different states: \textbf{Unvisited}, \textbf{Map-Open List}, \textbf{Map-Close List}, \textbf{Frontier-Open List} and \textbf{Frontier-Close List}. Initially all cells are unvisited. If enqueued by the outer BFS, the cell is labelled as \textit{'Map-Open List'} and once dequeued by the outer BFS it is labelled as \textit{'Map-Close List'}. Similarly if enqueued by the inner BFS, the cell is labelled as \textit{'Frontier-Open List'} and once dequeue it is labelled as \textit{'Frontier-Close List'}. 
 				
 				\subsubsection{Fast Frontier Detection}
 
-				The FFD algorithm is an extension to the WFD algorithm. The WFD algorithm on its own identifies frontiers over the whole map every time the map is updated. This means that frontiers that have already been identified that didn't change will still have to re-identified by the algorithm. FFD overcomes this inefficiency by computing the frontiers of only the cells identified by the robot's laser readings. By doing so, the number of cells that are traversed in the search is greatly reduced, especially if the environment is of a greater size than considered in this coursework (e.g. 3D with environment broken discretized using a higher resolution). Once the algorithm has computed the frontiers of the cells identified by the laser scan, the old frontiers and the new frontiers from the laser scan are compared. The pseudocode for this algorithm is shown in Fig. \ref{ffdPseudocode}. This pseudocode tackles the identification of cells from raw laser readings as well which will not be discussed. The main focus is the section of code labelled "maintenance of previously detected frontiers". This section of the code aims to gain information about the frontiers of the whole map by using the old frontiers on the map and the frontiers of the laser scan. In this step multiple checks are performed: if a newly identifier frontier already exists, to see if an old frontier is no longer a frontier and to see if previously separate frontiers are now joined. 
+				The FFD algorithm is an extension to the WFD algorithm. The WFD algorithm on its own identifies frontiers over the whole map every time the map is updated. This means that frontiers that have already been identified that didn't change will still have to be re-identified by the algorithm. FFD overcomes this inefficiency by computing the frontiers of only the cells identified by the robot's laser readings. By doing so, the number of cells that are traversed in the search is greatly reduced, especially if the environment is of a greater size than considered in this coursework (e.g. 3D with environment broken discretized using a higher resolution). Once the algorithm has computed the frontiers of the cells identified by the laser scan, the old frontiers and the new frontiers from the laser scan are compared. The pseudocode for this algorithm is shown in Fig. \ref{ffdPseudocode}. This pseudocode tackles the identification of cells from raw laser readings as well which will not be discussed. The main focus is the section of code labelled "maintenance of previously detected frontiers". This section of the code aims to gain information about the frontiers of the whole map by using the old frontiers on the map and the frontiers of the laser scan. In this step multiple checks are performed: if a newly identifier frontier already exists, to see if an old frontier is no longer a frontier and to see if previously separate frontiers are now joined. 
 				
 				\begin{figure}[H]
 					\centering
@@ -151,30 +160,45 @@
 						\caption{Fast Frontier Detection Pseudocode}
 						\label{ffdPseudocode}
 					\end{subfigure}
-					\caption{Pseudocode for the two frontier detection algorithms discussed. \cite{topiwala2018frontier, keidar2011fast}}
+					\caption{Pseudocode for the two frontier detection algorithms discussed. \cite{topiwala2018frontier, keidar2011fast,keidar2012robot}}
 					\label{frontierSearchPseudocode}
 				\end{figure}
 
 			\subsection{Waypoint Selection}
 
-				Once the frontiers are identified the robot needs to decide which point on which frontier it should travel to next. The next destination should be chosen to maximize the amount of new information that can be obtained. For this there are two main methods, heuristic based approach and information based approach. Using these, the robot will be able to pick the next waypoint to move to. 
+				Once the frontiers are identified the robot needs to decide which point, on which frontier, it should travel to next. The next destination should be chosen to maximize the amount of new information that can be obtained. For this there are two main methods, heuristic based approach and information based approach. Using these, the robot will be able to pick the next waypoint to move to. 
 
 				\subsubsection{Heuristic Approaches}
 
-					Heuristics can be used to choose the next frontier to travel to. Two main heuristics exist: the largest frontiers and the closest frontier. The largest frontier heuristic chooses the frontier with the largest number of frontier cells as the frontier to travel to next. Which cell of this frontier to travel to may be decided by the closest cell (smallest Euclidean distance to the robot) or the middle cell of the frontier. The idea of choosing the largest frontier as the next frontier is based on the idea that the largest frontier will give the robot the largest field of view to explore the unknown cells. The other heuristic is the distance. In this case the frontier with the smallest Euclidean distance to the robot will be chosen. This approach puts less emphasis on the information gained and aims to improve the time taken to explore the whole map. This is due to the fact that where the size heuristic approach may result in the robot going back and forth between two large frontiers, the distance heuristic approach is likely to result in the robot covering all frontiers as it travels. 
+					To decide where to go to next to continue exploration, heuristics can be used. Two heuristics that are very commonly adopted involve making a decision based on the size of the frontier and the distance to the frontier from the robots currents position i.e. the larger frontier and a closer frontier. Based on the the next point to travel to can be chosen as: 					\begin{itemize}
+						\item A cell on a frontier closest to the robot's current position.
+						\item A cell on the largest frontier
+						\item The cell closest to the robot on the largest frontier etc.
+					\end{itemize}
+				
+				
+					The largest frontier heuristic chooses the frontier with the largest number of frontier cells as the frontier to travel to next. Which cell of this frontier to travel to may be decided by the closest cell (smallest Euclidean distance to the robot) or the middle cell of the frontier. The idea of choosing the largest frontier as the next frontier is based on the idea that the largest frontier will give the robot the largest field of view to explore the unknown cells. We implemented WFD using this heuristic such that it chooses the middle cell of the largest frontier as we believe this will provide the largest field of view.
+					\\
+					\\
+					Another heuristic approach can be based on the distance to the next point on the frontier purely based on the time taken to explore. In this case, the frontier cell with the smallest Euclidean distance to the robot in the same direction will be chosen. This approach puts less emphasis on the information gained and just aims to improve the time taken to explore the whole map. This is specially chosen in cases where energy is limited and moving forwards and finishing exploration can be though of as better than stopping to decide where to go next.The frontier size heuristic approach may result in the robot going back and forth between two large frontiers and thereby result in a change in direction or even make the robot halt for a bit as it decides. In such cases, the closest distance heuristic approach is likely to result in the robot covering map well as quickly as possible. 
 
 				\subsubsection{Information Based Approach}
 
-					This method aims to compute the uncertainty in the map and choses a point that maximizes the amount of information that can be gained about the surrounding environment. The approach utilizes a probabilistic approach and the concept of entropy. The entropy of a singular cell is computed by the equation given in Eq. \ref{eq:singleCellEntropy}. This approach will be discussed in more detail in later chapters.
+					This method aims to compute the uncertainty in the map and chooses a point that maximizes the amount of information that can be gained about the surrounding environment. The approach utilizes a probabilistic approach and the concept of entropy. The entropy of a singular cell is computed by the equation given in Eq. \ref{eq:singleCellEntropy}. This approach will be discussed in more detail in later chapters.
 
 					\begin{equation}
 						H \left(\textbf{c}\right) = -\left(1-p\left(\textbf{c}\right)\right)ln\left(1-p\left(\textbf{c}\right)\right) - p\left(\textbf{c}\right)ln \; p\left(\textbf{c}\right)
 						\label{eq:singleCellEntropy}
 					\end{equation}
+					
+					\cite{stachniss2003exploring} discusses how different view-point selection strategies affect different factors of exploration like time taken to explore, path length etc.
 
 			\subsection{Reference Exploration Algorithm}
 
-				The algorithm implemented out of the box was purposefully inefficient. To choose a new destination, the algorithm traverses over all the cells and identifies if they are frontier cells or not. The search does not implement a queue but rather starts from the coordinate $(0,0)$ and uses two for loops to iterate over columns and rows. The chosen destination is set to be the frontier closes to the point $(0,\frac{Y}{2})$ where $Y$ is the height of the grid. This uses the assumption that the robot will start off in the central left position (close of the stated coordinate). Therefore, it will initially explore cells that are close to it and slowly work its way to the right. However, due to the fact that this algorithm has no notion of frontier size or current position of the robot, the choice of the next waypoint is suboptimal. The plot in Fig. \ref{Part2} shows how the exploration time and coverage compare to our own implementation of a explorer algorithm. it is clearly visible that the reference algorithm is relatively inefficient. It should be noted that the coverage that is computed can never be 100\% in the given map. This is due to the fact that the robot cannot gain information about the cells that are within walls or outside of its confined range.  
+				The implementation of a reference exploration algorithm as provided was purposefully inefficient. To choose a new destination, the algorithm traverses over all the cells and identifies if they are frontier cells or not. The search does not implement a queue but rather starts from the coordinate $(0,0)$ and uses two for loops to iterate over columns and rows. The chosen destination is set to be the frontier cell closest to the point $(0,\frac{Y}{2})$ where $Y$ is the height of the grid. This uses the assumption that the robot will start off in the central left position (close of the stated coordinate). Therefore, it will initially explore cells that are close to it and slowly work its way to the right. However, due to the fact that this algorithm has no notion of frontier size or current position of the robot, the choice of the next waypoint is suboptimal. The plot in Fig. \ref{Part2} shows how the exploration time and coverage compare to our own implementation of an explorer algorithm. It is clearly visible from the plot that the reference algorithm is relatively inefficient. It should be noted that the coverage that is computed can never be 100\% in the given map. This is due to the fact that the robot cannot gain information about the cells that are enclosed by walls on all its sides or are outside of the traversable area confined by boundaries.  
+				\\
+				\\
+				Note that the reference implementation function name has been changed from \textit{chooseNewDestination()} to \textit{chooseNewDestinationOld()}.
 			
 			\subsection{Improving the Exploration Algorithm}
 
@@ -185,7 +209,10 @@
 					\label{middleCellVisualization}
 				\end{figure}
 
-				Our implementation of the exploration algorithm utilizes the WFD algorithm to detect the frontiers of the map. The algorithm has a store of the current frontiers of the map in a priority queue. The priority value is the number of cells in the frontier and the largest frontier is popped first. Every time the map is updated, the WFD algorithm re-identifies the frontiers and updates the list. When a new destination is to be chosen, a frontier is popped from the priority queue and the 2middle" cell is chosen. This notion of "middle" is computed by considering the maximum and minimum x and y coordinates. An illustration of this is shown in Fig. \ref{middleCellVisualization}. The cell closes to the centre of the rectangle outlining the frontiers is chosen. If the algorithm chose a waypoint that was not reached by the robot, this cell is added to a black-list to prevent looping and other bad behaviour. Once black-listed the cell will no longer be chosen as a destination to travel to. The performance of this exploration algorithm is shown in Fig. \ref{Part2} alongside the performance of the baseline reference algorithm. It can be seen that our implementation is quicker at exploring the whole map. 
+				Our implementation of the exploration algorithm utilizes the WFD algorithm to detect the frontiers of the map. The algorithm stores the cells of the current frontier of the map in a priority queue. The priority value is the number of cells in the frontier and the largest frontier is popped first. Every time the map is updated, the WFD algorithm re-identifies the frontiers and updates the list. When a new destination is to be chosen, a frontier is popped from the priority queue and the middle" cell is chosen. This notion of "middle" is computed by considering the maximum and minimum x and y coordinates. An illustration of this is shown in Fig. \ref{middleCellVisualization}. The cell closes to the centre of the rectangle outlining the frontiers is chosen. If the algorithm chose a waypoint that was not reached by the robot, this cell is added to a black-list to prevent looping and other bad behaviour. Once black-listed the cell will no longer be chosen as a destination to travel to. The performance of this exploration algorithm is shown in Fig. \ref{Part2} alongside the performance of the baseline reference algorithm. It can be seen that our implementation is quicker at exploring the whole map. 
+				\\
+				\\
+				The code implementing this part can be found in \textit{explorer\textunderscore node.py} and the algorithm is implemented by function \textit{chooseNewDestination()} which then intrinsically invokes the other functions - getFrontiers(), updateFrontiers(), getGoodCells(), getmiddleCell() that together implement WFD which uses the middle cell of the largest frontier as the next point to continue exploration.
 				\\
 				\\
 				In addition to this, we decided to disable the validation of the start cell. The robot sometimes found its way into a place where the occupancy grid was free but the search grid wasn't. Under this circumstance it meant that the validation of the start cell would return false and all possible plans will be unsuccessful. This results in all of the remaining frontiers being black-listed and the algorithm terminating without having explored the map completely. 
@@ -202,7 +229,7 @@
 	
 	%%%%%%%%%%% PART 3 %%%%%%%%%%%%%%%%%
 	\section{Mapping the Environment}
-		The algorithm results obtained in the last chapter utilized a search grid that had knowledge of the real map when planning a route. However, in this example, the planner and the occupancy grid are both set to be unknown when the robot starts. This will test both the reactive planner and the frontier detection in conjunction. Whereas previously, the planner could decide if a destination is reachable, now the reactive planner will be used to handle this. As previously discussed, the validation of the start cell is disabled to prevent early termination of the planner. The results of the exploration are presented below in Fig. \ref{Part3}. 
+		The algorithm results obtained in the last chapter utilized a search grid that had knowledge of the real map when planning a route. However, in this example, the planner and the occupancy grid are both set to be unknown when the robot starts. This will test both the reactive planner and the frontier detection in conjunction. Previously, the planner could decide if a destination is reachable, but now the reactive planner will be used to handle this. As previously discussed, the validation of the start cell is disabled to prevent early termination of the planner. The results of the exploration are presented below in Fig. \ref{Part3}. 
 
 		\begin{figure}[H]
 			\centering
@@ -210,21 +237,154 @@
 			\caption{Graphs showing how the exploration time and coverage differ for the reference(baseline) algorithm and our implementation of the explorer algorithm utilizing WFD in the case when the true search grid is not known to the planner.}
 			\label{Part3}
 		\end{figure}
-	
+
+		The final occupancy grids for both algorithms are pretty similar as can be seen in Fig. \ref{finalMap}. Both maps are not 100\% accurate  and have some noise even in the free space that the robot was able to explore. This is most likely due to noise in the sensors and rounding errors in the code. The unknown cells that the robot couldn't get to (within cells and outside of the boundary) were also not explored. In addition to this, both maps feature frontiers. The frontiers in the final map are most likely cells that are black-listed meaning that the robot previously attempted to plan a path to these points and was unable to do so. This is as most the frontiers are single cells with occupied cells on either side. This means that when the search grid is built from the occupancy grid, these frontier cells are also marked as occupied. As the final cell is now occupied the planner returns false and the explorer black lists the cell.
+
+		\begin{figure}[H]
+			\centering
+			\begin{subfigure}{.5\textwidth}
+				\centering
+				\includegraphics[width=.9\linewidth]{images/finalMap_task3_baseline_TSF2.eps}
+				\caption{Final occupancy grid with the baseline exploration algorithm}
+				\label{finalMap_task3_baseline_TSF2}
+			\end{subfigure}%
+			\begin{subfigure}{.5\textwidth}
+				\centering
+				\includegraphics[width=.9\linewidth]{images/finalMap_task3_WFD_TSF2.eps}
+				\caption{Final occupancy grid with the WFD exploration algorithm}
+				\label{finalMap_task3_WFD_TSF2}
+			\end{subfigure}
+			\caption{The final occupancy grid for both exploration algorithms}
+			\label{finalMap}
+		\end{figure}
+
 	%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 	
 	%%%%%%%%%%% PART 4 %%%%%%%%%%%%%%%%%
 	\section{Information-Theoretic Path Planning}
-	
-	
+		While the heuristic approach provides a systematic method/rules to explore a map, the Information-Theoretic approach treats a planning exploration problem as an optimisation problem. This way an optimal solution is guaranteed unlike in the previous approach. An optimisation problem usually uses a cost and attempts to minimise it. The cost measure that is minimised here is entropy. 
+		\subsection{Description of Entropy and Mutual Entropy}
+			The cost measure for a planning exploration problem has to analyse the explored-ness of the given map. This can also be thought of as the uncertainity in the map. Entropy is a metric that quantifies the uncertainty and hence information theorotic approach involves using entropy as the cost measure that is minimised. For a single cell the entropy would be given by the equation shown in Eq. \ref{eq:singleCellEntropy1}. In this equation, $\textbf{c}$ represents a cell and $c$ represents the possible states of the cell. Therefore entropy is a sum over all of the possible states of the cell.
+
+			\begin{equation}
+				H \left(\textbf{c}\right) = - \sum_{c} p\left(\textbf{c}=c\right)\text{ln} \; p\left(\textbf{c}=c\right)
+				\label{eq:singleCellEntropy1}
+			\end{equation}
+			
+			In our example, cells are either known to be occupied/free or unknown. Additionally, the state of a cell can either be occupied or free. Therefore, the above mentioned sum has only two terms. Furthermore, given that the probability of a cell being occupied and the probability of a cell being free sum to 1, the sum depends on only one probability. This simplified version of the entropy of a cell can be found in Eq. \ref{eq:singleCellEntropy}. In this equation, the probability $p\left(\textbf{c}\right)$ represents the probability of the cell being occupied. The occupancy grid for our simplified case consisting of cells with probabilities equal to 0, 0.5 or 1 can be shown to have cells of entropy as follows:
+
+			\begin{align}
+				\nonumber p\left(\textbf{c}\right) = 0 \; &: \; H \left(\textbf{c}\right) = -(1)\text{ln}(1)-\text{ln}(0) = 0 \\
+				\nonumber p\left(\textbf{c}\right) = 0.5 \; &: \; H \left(\textbf{c}\right) = -(0.5)\text{ln}(0.5)-0.5\text{ln}(0.5) = \text{ln}2 \\
+				\nonumber p\left(\textbf{c}\right) = 1 \; &: \; H \left(\textbf{c}\right) = -(0)\text{ln}(0)-1\text{ln}(1) = 0 \\
+			\end{align}
+
+			To compute the entropy of the whole map the expression in Eq. \ref{eq:mapEntropy1} needs to be evaluated. This equation, $\textbf{M}$ represents possible map realizations (i.e. specific assignments of occupied/free to cells). Here, the entropy is the sum over all possible map realizations.
+
+			\begin{equation}
+				H \left(\textbf{C}\right) = - \sum_{\textbf{M}} p\left(\textbf{M}\right) \text{ln} \; p\left(\textbf{M}\right)
+				\label{eq:mapEntropy1}
+			\end{equation}
+			
+			To compute $p(\textbf{M})$ we introduce the notation $p_\textbf{C}(\textbf{M})$ which signifies the probability that an occupancy grid $\textbf{C}$ can take a specific map realization $\textbf{M}$. Assuming independence between cells this can be expressed as shown in Eq. \ref{eq:mapProbability1}.
+			
+			\begin{equation}
+				p_\textbf{C}(\textbf{M}) = \prod_{i} \prod_{j} p(c_{ij} = m_{ij})
+				\label{eq:mapProbability1}
+			\end{equation}
+			
+			This product can be broken down into two groups of cells: the group of known cells and the group of unknown cells. As this is mutually exclusive, there is no intersection between the two sets. We can therefore rewrite Eq. \ref{eq:mapProbability1} as a product of the known and unknown probabilities. The probability of the known portion can easily be computed, If the map realization $\textbf{M}_K$ is equal to the current known map realization $\textbf{M}_K^{known}$ then the probability is 1 otherwise the probability is 0. This can be described by a delta function which we shall label $\delta_{\textbf{C}_K}(\textbf{M}_K)$. Using these the following equations are formulated:
+
+			\begin{equation}
+				\begin{split}
+					p_\textbf{C}(\textbf{M}) &= p_{\textbf{C}_K}(\textbf{M}_K) \cdot p_{\textbf{C}_U}(\textbf{M}_U) \\
+					p_\textbf{C}(\textbf{M}) &= \delta_{\textbf{C}_K}(\textbf{M}_K) \cdot p_{\textbf{C}_U}(\textbf{M}_U) 
+				\end{split}
+				\label{eq:mapProbability2}
+			\end{equation}
+
+			By exploiting the nature of the delta function the map probability can be written as the following piecewise function:
+
+			\[
+				p_\textbf{C}(\textbf{M}) =
+				\begin{cases}
+					0 										& \text{if $\textbf{M}_K \neq \textbf{M}_K^{known}$} \\
+					p_{\textbf{C}_U}(\textbf{M}_U) 			& \text{if $\textbf{M}_K = \textbf{M}_K^{known}$} 
+				\end{cases}
+			\]
+			
+			This piecewise function can be simplified further by considering the simple case studied in this coursework. In this example, cells are limited to 2 different states and if unknown they have the same probability of being occupied or free. Therefore the probability $p_{\textbf{C}_U}(\textbf{M}_U)$ can be rewritten as shown in Eq. \ref{eq:mapProbability3}. In this equation, $\mid \textbf{C}_U \mid$ represents the number of unknown cells. 
+
+			\begin{equation}
+				\begin{split}
+					p_{\textbf{C}_U}(\textbf{M}_U) &= \prod_{i} p(c_{U,i} = m_{U,i}) \\
+					&= \left(0.5\right)^{\mid \textbf{C}_U \mid}
+				\end{split}
+				\label{eq:mapProbability3}
+			\end{equation}
+
+			Now to compute the entropy of the map we consider Eq. \ref{eq:mapEntropy1}. Any map realizations where the known portion of the map doesn't match what is already known, will result in a probability of 0 and a 0 sum term. Therefore, these map realizations can be ignored. The only map realizations that we need to consider are those, where the known portion matches what is already known about the world. Given 2 possible states and $\mid \textbf{C}_U \mid$ unknown cells, there are $2^{\mid \textbf{C}_U \mid}$ different realizations of the unknown portion of the map. Additionally, due to the fact that in this simple case, the unknown cells have equal probability of being occupied and free, the probability of each of these realizations is equal.This results in Eq. \ref{eq:mapEntropy1} reducing to the form shown in Eq. \ref{eq:mapEntropy2}.
+
+			\begin{equation}
+				\begin{split}
+					H \left(\textbf{C}\right) &= - \sum_{\textbf{M}} p\left(\textbf{M}\right)\text{ln} \; p\left(\textbf{M}\right) \\
+					&= - 2^{\mid \textbf{C}_U \mid} \cdot \left(0.5\right)^{\mid \textbf{C}_U \mid} \text{ln} \left(0.5\right)^{\mid \textbf{C}_U \mid} \\
+					&= - 2^{\mid \textbf{C}_U \mid} \cdot \left(2\right)^{-\mid \textbf{C}_U \mid} \text{ln} \left(0.5\right)^{\mid \textbf{C}_U \mid} \\
+					&= - \mid \textbf{C}_U \mid \text{ln} \left(0.5\right) \\
+					&= \mid \textbf{C}_U \mid \text{ln} \left(2\right)
+				\end{split}
+				\label{eq:mapEntropy2}
+			\end{equation}
+
+			It can be seen from this that the entropy in our case is directly proportional to the number of unknown cells. Now that we have a way of computing the current entropy of the map, we can utilize this in conjunction with another quantity to decide where the robot should travel to next. For this we introduce the mutual entropy. 
+			\\
+			\\
+			The mutual entropy is a measure of how much information is gained and it is this quantity that is to be maximized when choosing the next waypoint. To describe the mutual entropy, let us first assume that the robot travels to a point $\textbf{x}$ and observes the cells $\textbf{z}$. The new entropy of the map can be written as $H\left(\textbf{C}\mid\textbf{x},\textbf{z}\right)$. As we don't know the actual map, the observation $\textbf{z}$ that the robot makes is unknown to us. Therefore, we utilize the probability distribution of the unknown cells to produce an expected realization of the cells that are covered by the robot's lasers. This can be computed by producing a probability weighted sum of the Map Entropy over all the possible map realizations(as shown in Eq. \ref{eq:expectedMapEntropy}). This will be used to estimate the entropy of the map once the robot has travelled to the point $\textbf{x}$. 
+
+			\begin{equation}
+				H(\textbf{C}\mid\textbf{x}) = \sum_{\textbf{C}} p_{\textbf{C}_k}(\textbf{M})H(\textbf{C}\mid\textbf{x},\textbf{z}(\textbf{M}))
+				\label{eq:expectedMapEntropy}
+			\end{equation}
+
+			The mutual entropy is the information gained by travelling to a point $\textbf{x}$ and is given by the expression in Eq. \ref{eq:mutualEntropy}
+
+			\begin{equation}
+				I(\textbf{x}) = H \left(\textbf{C}\right) - H(\textbf{C}\mid\textbf{x})
+				\label{eq:mutualEntropy}
+			\end{equation}
+
+			The optimal cell to travel to $\textbf{x}^{*}$ is then given by the following maximization problem:
+
+			\begin{equation}
+				\textbf{x}^{*} = \argmax_{\textbf{x}}I(\textbf{x})
+				\label{eq:optimalCell}
+			\end{equation}
+
+		\subsection{Evolution of Entropy over Time}
+
+			\begin{figure}[H]
+				\centering
+				\includegraphics[scale=0.5]{images/EntropyChange.png}
+				\caption{The evolution of entropy over time for two different exploration algorithms.}
+				\label{EntropyChange}
+			\end{figure}
+
+			Using the equation for the entropy from Eq. \ref{eq:mapEntropy2}, the entropy of the map was computed at 5 second intervals. This was done for both the baseline algorithm and our implementation of the WFD algorithm. This was done by modifying run() function in \textit{mapper\textunderscore node.py} to call the function \textit{computeMapEntropy()} every 5s. \textit{computeMapEntropy()} then invokes \textit{computeCellEntropy()} which calculates and returns the entropy of each cell based on Eq. \ref{eq:mapEntropy2}. \textit{computeMapEntropy()} then sums the entropy of individual cells and returns it.
+			\\
+			\\
+			The entropy values calculated were then stored in a csv file and were plotted. The results are shown in Fig. \ref{EntropyChange}. There are some distinct features in this plot. We can observe that both plots decrease as time evolves. This makes sense as when the explorer gains more knowledge about the environment, the uncertainty in the map decreases resulting in a lower entropy. In addition to this, a step like behaviour can be observed. This can be explained by the fact that the robot will not be gaining new information always. For example, if a robot travels through a known region to get to a frontier, no new information will be gained for the time it travels through the known region. This results in no change in the map entropy. 
+			\\
+			\\
+			We can also see that both explorers reach a similar final entropy. This is backed up by Fig. \ref{Part3} where both explorers have a similar final coverage. Due to the fact that entropy is proportional to the number of unknown cells, a similar coverage will result in a similar final map entropy. A notable difference between the two traces is that despite reaching the same final entropy value, our WFD implementation reached this value much quicker in comaprison to the baseline algorithm. In addition to this, the gradient of the entropy plot is higher for our WFD implementation than the baseline algorithm. This suggests that our WFD implementation is able to gain information about the environment quicker than the baseline algorithm. Therefore, we are able to conclude with confidence that our WFD implementation is better than the baseline explorer algorithm. 
 	%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 	
-	\newpage
 	\bibliographystyle{IEEEtran}
 	\bibliography{references}
-	\newpage
-	\appendix
-	\appendixpage
-	\addappheadtotoc
+
+	%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%	\newpage
+%	\appendix
+%	\appendixpage
+%	\addappheadtotoc
 	
 \end{document}

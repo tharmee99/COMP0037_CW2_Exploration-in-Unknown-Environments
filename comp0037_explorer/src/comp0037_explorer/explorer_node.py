@@ -90,7 +90,7 @@ class ExplorerNode(ExplorerNodeBase):
     # Choosing the next destination based purely on the WFD algorithm
     def chooseNewDestination(self):
         destination = None
-        nextCellValid = False
+        nextCellValid = False   
 
         loop_flg = True
 
