@@ -259,16 +259,16 @@
 	
 	%%%%%%%%%%% PART 4 %%%%%%%%%%%%%%%%%
 	\section{Information-Theoretic Path Planning}
-		
+		While the heuristic approach provides a systematic method/rules to explore a map, the Information-Theoretic approach treats a planning exploration problem as an optimisation problem. This way an optimal solution is guaranteed unlike in the previous approach. An optimisation problem usually uses a cost and attempts to minimise it. The cost measure that is minimised here is entropy. 
 		\subsection{Description of Entropy and Mutual Entropy}
-			The information-Theoretic approach to path planning utilizes the concept of entropy. Entropy represents the uncertainty in the map. For a single cell the entropy would be given by the equation shown in Eq. \ref{eq:singleCellEntropy1}. In this equation $\textbf{c}$ represents a cell and $c$ represents the possible states of the cell. Therefore entropy is a sum over all of the possible states of the cell.
+			The cost measure for a planning exploration problem has to analyse the explored-ness of the given map. This can also be thought of as the uncertainity in the map. Entropy is a metric that quantifies the uncertainty and hence information theorotic approach involves using entropy as the cost measure that is minimised. For a single cell the entropy would be given by the equation shown in Eq. \ref{eq:singleCellEntropy1}. In this equation, $\textbf{c}$ represents a cell and $c$ represents the possible states of the cell. Therefore entropy is a sum over all of the possible states of the cell.
 
 			\begin{equation}
 				H \left(\textbf{c}\right) = - \sum_{c} p\left(\textbf{c}=c\right)\text{ln} \; p\left(\textbf{c}=c\right)
 				\label{eq:singleCellEntropy1}
 			\end{equation}
 			
-			In our example, cells are either known to be occupied/free or unknown. Additionally, the state of a cell can either be occupied or free. Therefore the above mentioned sum has only two terms. Furthermore given that the probability of a cell being occupied and the probability of a cell being free sum to 1, the sum depends on only one probability. This simplified version of the entropy of a cell can be found in Eq. \ref{eq:singleCellEntropy}. In this equation the probability $p\left(\textbf{c}\right)$ represents the probability of the cell being occupied. The occupancy grid for our simplified case consisting of cells with probabilities equal to 0, 0.5 or 1 can be shown to have cells of entropy as follows:
+			In our example, cells are either known to be occupied/free or unknown. Additionally, the state of a cell can either be occupied or free. Therefore, the above mentioned sum has only two terms. Furthermore, given that the probability of a cell being occupied and the probability of a cell being free sum to 1, the sum depends on only one probability. This simplified version of the entropy of a cell can be found in Eq. \ref{eq:singleCellEntropy}. In this equation, the probability $p\left(\textbf{c}\right)$ represents the probability of the cell being occupied. The occupancy grid for our simplified case consisting of cells with probabilities equal to 0, 0.5 or 1 can be shown to have cells of entropy as follows:
 
 			\begin{align}
 				\nonumber p\left(\textbf{c}\right) = 0 \; &: \; H \left(\textbf{c}\right) = -(1)\text{ln}(1)-\text{ln}(0) = 0 \\
@@ -276,7 +276,7 @@
 				\nonumber p\left(\textbf{c}\right) = 1 \; &: \; H \left(\textbf{c}\right) = -(0)\text{ln}(0)-1\text{ln}(1) = 0 \\
 			\end{align}
 
-			To compute the entropy of the whole map the expression in Eq. \ref{eq:mapEntropy1} needs to be evaluated. in this equation, $\textbf{M}$ represents possible map realizations (i.e. specific assignments of occupied/free to cells). The entropy is the sum over all possible map realizations.
+			To compute the entropy of the whole map the expression in Eq. \ref{eq:mapEntropy1} needs to be evaluated. This equation, $\textbf{M}$ represents possible map realizations (i.e. specific assignments of occupied/free to cells). Here, the entropy is the sum over all possible map realizations.
 
 			\begin{equation}
 				H \left(\textbf{C}\right) = - \sum_{\textbf{M}} p\left(\textbf{M}\right) \text{ln} \; p\left(\textbf{M}\right)
@@ -320,7 +320,7 @@
 				\label{eq:mapProbability3}
 			\end{equation}
 
-			Now to compute the entropy of the map we consider Eq. \ref{eq:mapEntropy1}. Any map realizations where the known portion of the map doesn't match what is already know, will result in a probability of 0 and a 0 sum term. Therefore these map realizations can be ignored. The only map realizations that we need to consider are those where the known portion matches what is already known about the world. Given 2 possible states and $\mid \textbf{C}_U \mid$ unknown cells, there are $2^{\mid \textbf{C}_U \mid}$ different realizations of the unknown portion of the map. Additionally, due to the fact that in this simple case, the unknown cells have equal probability of being occupied and free, the probability of each of these realizations is equal.This results in Eq. \ref{eq:mapEntropy1} reducing to the form shown in Eq. \ref{eq:mapEntropy2}.
+			Now to compute the entropy of the map we consider Eq. \ref{eq:mapEntropy1}. Any map realizations where the known portion of the map doesn't match what is already known, will result in a probability of 0 and a 0 sum term. Therefore, these map realizations can be ignored. The only map realizations that we need to consider are those, where the known portion matches what is already known about the world. Given 2 possible states and $\mid \textbf{C}_U \mid$ unknown cells, there are $2^{\mid \textbf{C}_U \mid}$ different realizations of the unknown portion of the map. Additionally, due to the fact that in this simple case, the unknown cells have equal probability of being occupied and free, the probability of each of these realizations is equal.This results in Eq. \ref{eq:mapEntropy1} reducing to the form shown in Eq. \ref{eq:mapEntropy2}.
 
 			\begin{equation}
 				\begin{split}
@@ -333,7 +333,10 @@
 				\label{eq:mapEntropy2}
 			\end{equation}
 
-			It can be seen from this that the entropy in out case is directly proportional to the number of unknown cells. Now that we have a way of computing the current entropy of the map, we can utilize this in conjunction with another quantity to decide where the robot should travel to next. For this we introduce the mutual entropy. The mutual entropy is a measure of how much information is gained and it is this quantity that is to be maximized when choosing the next waypoint. To describe the mutual entropy, let us first assume that the robot travels to a point $\textbf{x}$ and observes the cells $\textbf{z}$. The new entropy of the map can be written as $H\left(\textbf{C}\mid\textbf{x},\textbf{z}\right)$. As we don't know the actual map, the observation $\textbf{z}$ that the robot makes is unknown to us. Therefore, we utilize the probability distribution of the unknown cells to produce an expected realization of the cells that are covered by the robot's lasers. This can be computed by producing a probability weighted sum of the Map Entropy over all the possible map realizations(as shown in Eq. \ref{eq:expectedMapEntropy}). This will be used to estimate the entropy of the map once the robot has travelled to the point $\textbf{x}$. 
+			It can be seen from this that the entropy in our case is directly proportional to the number of unknown cells. Now that we have a way of computing the current entropy of the map, we can utilize this in conjunction with another quantity to decide where the robot should travel to next. For this we introduce the mutual entropy. 
+			\\
+			\\
+			The mutual entropy is a measure of how much information is gained and it is this quantity that is to be maximized when choosing the next waypoint. To describe the mutual entropy, let us first assume that the robot travels to a point $\textbf{x}$ and observes the cells $\textbf{z}$. The new entropy of the map can be written as $H\left(\textbf{C}\mid\textbf{x},\textbf{z}\right)$. As we don't know the actual map, the observation $\textbf{z}$ that the robot makes is unknown to us. Therefore, we utilize the probability distribution of the unknown cells to produce an expected realization of the cells that are covered by the robot's lasers. This can be computed by producing a probability weighted sum of the Map Entropy over all the possible map realizations(as shown in Eq. \ref{eq:expectedMapEntropy}). This will be used to estimate the entropy of the map once the robot has travelled to the point $\textbf{x}$. 
 
 			\begin{equation}
 				H(\textbf{C}\mid\textbf{x}) = \sum_{\textbf{C}} p_{\textbf{C}_k}(\textbf{M})H(\textbf{C}\mid\textbf{x},\textbf{z}(\textbf{M}))
@@ -363,19 +366,19 @@
 				\label{EntropyChange}
 			\end{figure}
 
-			Using the equation for the entropy from Eq. \ref{eq:mapEntropy2}, the entropy of the map was computed at 5 second intervals. This was done for bot the baselines algorithm and our own implementation of the WFD algorithm. The results of this are shown in Fig. \ref{EntropyChange}. There are some distinct features in this plot. We can observe that both plots decrease as time evolves. This makes sense as when the explorer gains more knowledge about the environment, the uncertainty in the map decreases resulting in a lower entropy. In addition to this, a step like behaviour can be observed. This can be explained by the fact that the robot will not always be gaining new information. For example if a robot travels through a known region to get to a frontier, no new information will be gained for the time it travels through the known region. This results in no change in the map entropy. 
+			Using the equation for the entropy from Eq. \ref{eq:mapEntropy2}, the entropy of the map was computed at 5 second intervals. This was done for both the baseline algorithm and our implementation of the WFD algorithm. The results of this are shown in Fig. \ref{EntropyChange}. There are some distinct features in this plot. We can observe that both plots decrease as time evolves. This makes sense as when the explorer gains more knowledge about the environment, the uncertainty in the map decreases resulting in a lower entropy. In addition to this, a step like behaviour can be observed. This can be explained by the fact that the robot will not be gaining new information always. For example, if a robot travels through a known region to get to a frontier, no new information will be gained for the time it travels through the known region. This results in no change in the map entropy. 
 			\\
 			\\
-			We can also see that both explorers reach a similar final entropy. This is backed up by Fig. \ref{Part3} where both explorers have a similar final coverage. Due to the fact that entropy is proportional to the number of unknown cells, a similar coverage will result in a similar final map entropy. A notable difference between the two traces is that despite reaching the same final entropy value, our WFD implementation reached this value much quicker that the baseline algorithm. In addition to this, the gradient of the entropy plot is higher for our WFD implementation than the baseline algorithm. This suggests that our WFD implementation is able to gain information about the environment quicker than the baseline algorithm is. Therefore we are able to conclude with confidence that our WFD implementation is better than the baseline explorer algorithm. 
+			We can also see that both explorers reach a similar final entropy. This is backed up by Fig. \ref{Part3} where both explorers have a similar final coverage. Due to the fact that entropy is proportional to the number of unknown cells, a similar coverage will result in a similar final map entropy. A notable difference between the two traces is that despite reaching the same final entropy value, our WFD implementation reached this value much quicker in comaprison to the baseline algorithm. In addition to this, the gradient of the entropy plot is higher for our WFD implementation than the baseline algorithm. This suggests that our WFD implementation is able to gain information about the environment quicker than the baseline algorithm. Therefore, we are able to conclude with confidence that our WFD implementation is better than the baseline explorer algorithm. 
 	%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 	
 	\bibliographystyle{IEEEtran}
 	\bibliography{references}
 
 	%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-	\newpage
-	\appendix
-	\appendixpage
-	\addappheadtotoc
+%	\newpage
+%	\appendix
+%	\appendixpage
+%	\addappheadtotoc
 	
 \end{document}
