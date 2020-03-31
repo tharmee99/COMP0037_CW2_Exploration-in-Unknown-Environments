@@ -216,7 +216,27 @@
 			\caption{Graphs showing how the exploration time and coverage differ for the reference(baseline) algorithm and our implementation of the explorer algorithm utilizing WFD in the case when the true search grid is not known to the planner.}
 			\label{Part3}
 		\end{figure}
-	
+
+		The final occupancy grids for both algorithms are pretty similar as can be seen in Fig. \ref{finalMap}. Both maps are not 100\% accurate having some noise even in the free space the robot was able to explore. This is most likely due to noise in the sensors and rounding errors in the code. In addition, unknown cells that the robot couldn't get to (within cells and outside of the boundary) were also not explored. In addition to this both maps feature frontiers. The frontiers in the final map are most likely cells that are black-listed meaning that the robot previously attempted to plan a path to these points and was unable to do so. This is as most the frontiers are single cells with occupied cells on either side. This means that when the search grid is built from the occupancy grid, these frontier cells are also marked as occupied. As the final cell is now occupied the planner returns false and the explorer black lists the cell.
+
+		\begin{figure}[H]
+			\centering
+			\begin{subfigure}{.5\textwidth}
+				\centering
+				\includegraphics[width=.9\linewidth]{images/finalMap_task3_baseline_TSF2.eps}
+				\caption{Final occupancy grid with the baseline exploration algorithm}
+				\label{finalMap_task3_baseline_TSF2}
+			\end{subfigure}%
+			\begin{subfigure}{.5\textwidth}
+				\centering
+				\includegraphics[width=.9\linewidth]{images/finalMap_task3_WFD_TSF2.eps}
+				\caption{Final occupancy grid with the WFD exploration algorithm}
+				\label{finalMap_task3_WFD_TSF2}
+			\end{subfigure}
+			\caption{The final occupancy grid for both exploration algorithms}
+			\label{finalMap}
+		\end{figure}
+
 	%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 	
 	%%%%%%%%%%% PART 4 %%%%%%%%%%%%%%%%%
@@ -331,9 +351,10 @@
 			We can also see that both explorers reach a similar final entropy. This is backed up by Fig. \ref{Part3} where both explorers have a similar final coverage. Due to the fact that entropy is proportional to the number of unknown cells, a similar coverage will result in a similar final map entropy. A notable difference between the two traces is that despite reaching the same final entropy value, our WFD implementation reached this value much quicker that the baseline algorithm. In addition to this, the gradient of the entropy plot is higher for our WFD implementation than the baseline algorithm. This suggests that our WFD implementation is able to gain information about the environment quicker than the baseline algorithm is. Therefore we are able to conclude with confidence that our WFD implementation is better than the baseline explorer algorithm. 
 	%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 	
-	\newpage
 	\bibliographystyle{IEEEtran}
 	\bibliography{references}
+
+	%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 	\newpage
 	\appendix
 	\appendixpage
